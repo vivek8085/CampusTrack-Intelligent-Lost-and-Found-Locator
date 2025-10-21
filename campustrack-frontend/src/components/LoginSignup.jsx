@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 export default function LoginSignup({ onLogin }) {
@@ -11,6 +11,14 @@ export default function LoginSignup({ onLogin }) {
   });
   const [msg, setMsg] = useState("");
 
+  // ✅ Auto-login from localStorage if already logged in
+  useEffect(() => {
+    const storedUser = localStorage.getItem("campustrack_user");
+    if (storedUser) {
+      onLogin(JSON.parse(storedUser));
+    }
+  }, [onLogin]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMsg("");
@@ -21,7 +29,9 @@ export default function LoginSignup({ onLogin }) {
     }
 
     try {
-      const url = `http://localhost:8080/api/auth/${isLogin ? "login" : "signup"}`;
+      const url = `http://localhost:8080/api/auth/${
+        isLogin ? "login" : "signup"
+      }`;
       const payload = isLogin
         ? { email: form.email, password: form.password }
         : { name: form.name, email: form.email, password: form.password };
@@ -30,7 +40,9 @@ export default function LoginSignup({ onLogin }) {
       setMsg(res.data.message);
 
       if (isLogin && res.data.message.includes("successful")) {
-        onLogin({ email: form.email, name: form.name });
+        const user = { email: form.email, name: form.name };
+        localStorage.setItem("campustrack_user", JSON.stringify(user)); // ✅ Save session
+        onLogin(user);
       }
     } catch (err) {
       setMsg("❌ Something went wrong. Try again!");
@@ -47,7 +59,6 @@ export default function LoginSignup({ onLogin }) {
           {isLogin ? "Login" : "Sign Up"}
         </h2>
 
-        {/* Only show Name field when signing up */}
         {!isLogin && (
           <input
             type="text"
