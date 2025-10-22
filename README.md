@@ -53,14 +53,18 @@ CampusTrack/
  │   │   ├── controller/
  │   │   │    ├── AuthController.java
  │   │   │    ├── LostItemController.java
+ |   |   |    ├── FoundItemController.java
  │   │   ├── model/
  │   │   │    ├── User.java
  │   │   │    ├── LostItem.java
+ │   │   │    ├── FoundItem.java
  │   │   ├── repository/
  │   │   │    ├── UserRepository.java
  │   │   │    ├── LostItemRepository.java
+ │   │   │    ├── FoundItemRepository.java
  │   │   ├── service/
  │   │   │    ├── UserService.java
+ │   │   │    ├── JwtService.java
  │   │   ├── config/
  │   │   │    ├── SecurityConfig.java
  │   │   │    ├── WebConfig.java
@@ -74,6 +78,10 @@ CampusTrack/
  │   │   ├── components/
  │   │   │    ├── LoginSignup.jsx
  │   │   │    ├── LostItemForm.jsx
+ │   │   │    ├── ViewFoundItems.jsx
+ │   │   │    ├── ViewLostItems.jsx
+ │   │   ├── utils/
+ |   |   |    ├── api.js
  │   │   └── App.jsx
  │   ├── package.json
  │   └── vite.config.js
