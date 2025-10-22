@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import LoginSignup from "./components/LoginSignup";
 import LostItemForm from "./components/LostItemForm";
+import FoundItemForm from "./components/FoundItemForm";
 import ViewLostItems from "./components/ViewLostItems";
 
 export default function App() {
@@ -32,13 +33,23 @@ export default function App() {
         <h1 className="text-xl font-semibold">CampusTrack</h1>
         <div className="flex gap-4">
           <button
-            onClick={() => setPage("report")}
+            onClick={() => setPage("report-lost")}
             className={`hover:underline ${
-              page === "report" ? "font-bold" : ""
+              page === "report-lost" ? "font-bold" : ""
             }`}
           >
             Report Lost Item
           </button>
+
+          <button
+            onClick={() => setPage("report-found")}
+            className={`hover:underline ${
+              page === "report-found" ? "font-bold" : ""
+            }`}
+          >
+            Report Found Item
+          </button>
+
           <button
             onClick={() => setPage("view")}
             className={`hover:underline ${
@@ -58,11 +69,9 @@ export default function App() {
 
       {/* 🔹 Main Content */}
       <div className="p-6">
-        {page === "report" ? (
-          <LostItemForm user={user} />
-        ) : (
-          <ViewLostItems />
-        )}
+        {page === "report-lost" && <LostItemForm user={user} />}
+        {page === "report-found" && <FoundItemForm user={user} />}
+        {page === "view" && <ViewLostItems />}
       </div>
     </div>
   );

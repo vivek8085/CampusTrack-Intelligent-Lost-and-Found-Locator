@@ -53,8 +53,8 @@ export default function LostItemForm() {
     if (formData.image) data.append("image", formData.image);
 
     try {
+      // Let axios/browser set the Content-Type (including boundary) automatically
       const res = await axios.post("http://localhost:8080/api/lostitems/report", data, {
-        headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });
       alert(res.data.message);
