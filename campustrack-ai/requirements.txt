@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+sentence-transformers
+tensorflow
+scikit-learn

@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Found Item Details</title>
+    <style>
+      body { font-family: Arial, sans-serif; background:#f7fafc; color:#111827; padding:24px; }
+      .card { background: #fff; padding: 18px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); max-width:900px; margin:0 auto }
+      .img { width: 320px; height: 240px; background:#eee; display:flex; align-items:center; justify-content:center; color:#9ca3af }
+      .meta { margin-left:16px }
+      .grid { display:flex; gap:16px }
+      a { color:#2563eb }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <h1>Found Item Details</h1>
+      <div id="content">Loading…</div>
+    </div>
+
+    <script>
+      (async function(){
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+        const content = document.getElementById('content');
+        if (!id) {
+          content.innerHTML = '<div style="color:#ef4444">No id provided in query string. Use ?id=123</div>';
+          return;
+        }
+
+        try {
+          // call backend directly to avoid dev-server proxy issues
+          const backend = `${location.protocol}//${location.hostname}:8080`;
+          const res = await fetch(`${backend}/api/founditems/all`, { credentials: 'include' });
+          if (!res.ok) {
+            const txt = await res.text();
+            content.innerHTML = `<div style="color:#ef4444">Failed to fetch items from server: ${res.status} ${res.statusText}<pre style="white-space:pre-wrap">${escapeHtml(txt)}</pre></div>`;
+            return;
+          }
+
+          // ensure we have JSON
+          const ctype = res.headers.get('content-type') || '';
+          if (!ctype.includes('application/json')) {
+            const txt = await res.text();
+            content.innerHTML = `<div style="color:#ef4444">Unexpected response from server (expected JSON):<pre style="white-space:pre-wrap">${escapeHtml(txt)}</pre></div>`;
+            return;
+          }
+
+          const items = await res.json();
+          const item = items.find(it => String(it.id) === String(id));
+          if (!item) {
+            content.innerHTML = `<div style="color:#374151">Item with id ${id} not found.</div>`;
+            return;
+          }
+          const imageUrl = item.imageUrl ? (item.imageUrl.startsWith('/uploads/') ? `${location.origin}${item.imageUrl}` : item.imageUrl) : null;
+
+          // check if lostId passed so we can show confirm button
+          const params = new URLSearchParams(window.location.search);
+          const lostIdParam = params.get('lostId');
+
+          content.innerHTML = `
+            <div class="card">
+              <div style="display:flex; align-items:flex-start; gap:16px">
+                <div class="img">${imageUrl ? `<img src="${imageUrl}" style="width:320px;height:240px;object-fit:cover;border-radius:6px"/>` : 'No image'}</div>
+                <div class="meta">
+                  <h2 style="margin:0 0 8px">${escapeHtml(item.itemName || 'No name')}</h2>
+                  <p><strong>Brand:</strong> ${escapeHtml(item.brand || '')}</p>
+                  <p><strong>Model No:</strong> ${escapeHtml(item.modelNo || '')}</p>
+                  <p><strong>Size:</strong> ${escapeHtml(item.size || '')}</p>
+                  <p><strong>Location:</strong> ${escapeHtml(item.location || '')}</p>
+                  <p><strong>About:</strong> ${escapeHtml(item.about || '')}</p>
+                  <p style="color:#6b7280"><strong>Found on:</strong> ${item.foundDateTime ? new Date(item.foundDateTime).toLocaleString() : ''}</p>
+                  <p><a href="${location.origin}">Back to app</a></p>
+                  ${lostIdParam ? `<div style="margin-top:12px"><button id="confirmBtn" style="background:#10b981;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer">Confirm match with lost id ${escapeHtml(lostIdParam)}</button><span id="confirmMsg" style="margin-left:12px;color:#065f46"></span></div>` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+
+          if (lostIdParam) {
+            const btn = document.getElementById('confirmBtn');
+            const msg = document.getElementById('confirmMsg');
+            btn.addEventListener('click', async () => {
+              btn.disabled = true;
+              msg.textContent = 'Saving...';
+              try {
+                const res = await fetch(`${location.protocol}//${location.hostname}:8080/api/match-confirmations`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ foundItemId: Number(id), lostItemId: Number(lostIdParam) })
+                });
+                if (!res.ok) throw new Error('Server error');
+                const json = await res.json();
+                msg.textContent = json.message || 'Confirmed';
+              } catch (err) {
+                console.error(err);
+                msg.textContent = 'Failed to save confirmation';
+                btn.disabled = false;
+              }
+            });
+          }
+        } catch (err) {
+          console.error(err);
+          content.innerHTML = '<div style="color:#ef4444">Failed to load item data from server</div>';
+        }
+
+        function escapeHtml(s) {
+          return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+      })();
+    </script>
+  </body>
+</html>

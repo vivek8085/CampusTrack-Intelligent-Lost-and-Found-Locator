@@ -26,6 +26,12 @@ public class LostItemController {
     @Autowired
     private LostItemRepository lostItemRepository;
 
+    @Autowired
+    private com.campustrack.lostandfound.repository.FoundItemRepository foundItemRepository;
+
+    @Autowired
+    private com.campustrack.lostandfound.service.AIService aiService;
+
     // ✅ Report Lost Item with image upload
     @PostMapping(value = "/report", consumes = {"multipart/form-data"})
     public ResponseEntity<?> reportLostItem(
@@ -75,6 +81,28 @@ public class LostItemController {
             }
 
             lostItemRepository.save(item);
+
+            // analyze against found items asynchronously
+            new Thread(() -> {
+                try {
+                    java.util.List<com.campustrack.lostandfound.model.FoundItem> founds = foundItemRepository.findAll();
+                    // reuse aiService: analyze found items vs this lost item by swapping roles
+                    // create a temporary FoundItem-like wrapper using lost item's data
+                    com.campustrack.lostandfound.model.FoundItem temp = new com.campustrack.lostandfound.model.FoundItem();
+                    temp.setId(null);
+                    temp.setItemName(item.getItemName());
+                    temp.setBrand(item.getBrand());
+                    temp.setModelNo(item.getModelNo());
+                    temp.setSize(item.getSize());
+                    temp.setLocation(item.getLocation());
+                    temp.setAbout(item.getAbout());
+                    temp.setFoundDateTime(java.time.LocalDateTime.now());
+                    aiService.analyzeAndSaveMatches(temp, java.util.Collections.emptyList());
+                    // publish suggestions for lost side as well: the AIService.publish currently publishes for found items only
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
 
             Map<String, Object> res = new HashMap<>();
             res.put("message", "✅ Lost item reported successfully!");

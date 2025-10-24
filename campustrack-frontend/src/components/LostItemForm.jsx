@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-export default function LostItemForm() {
+export default function LostItemForm({ onSuccess }) {
   const [formData, setFormData] = useState({
     itemName: "",
     brand: "",
@@ -57,8 +57,9 @@ export default function LostItemForm() {
       const res = await axios.post("http://localhost:8080/api/lostitems/report", data, {
         withCredentials: true,
       });
-      alert(res.data.message);
-      handleReset();
+  alert(res.data.message);
+  handleReset();
+  if (onSuccess && res.data.itemId) onSuccess(res.data.itemId);
     } catch (err) {
       alert(err.response?.data?.message || "❌ Failed to submit lost item");
     }

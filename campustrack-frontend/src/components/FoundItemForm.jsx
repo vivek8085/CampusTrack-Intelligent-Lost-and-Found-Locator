@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-export default function FoundItemForm({ user }) {
+export default function FoundItemForm({ user, onSuccess }) {
   const [formData, setFormData] = useState({
     itemName: "",
     brand: "",
@@ -50,8 +50,9 @@ export default function FoundItemForm({ user }) {
         withCredentials: true,
       });
 
-      alert(res.data.message || "✅ Found item reported successfully!");
-      handleReset();
+  alert(res.data.message || "✅ Found item reported successfully!");
+  handleReset();
+  if (onSuccess && res.data.itemId) onSuccess(res.data.itemId);
     } catch (err) {
       alert(err.response?.data?.message || "❌ Failed to submit found item");
     }

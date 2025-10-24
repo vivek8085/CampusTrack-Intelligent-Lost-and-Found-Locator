@@ -29,6 +29,12 @@ public class FoundItemController {
     @Autowired
     private FoundItemRepository foundItemRepository;
 
+    @Autowired
+    private com.campustrack.lostandfound.repository.LostItemRepository lostItemRepository;
+
+    @Autowired
+    private com.campustrack.lostandfound.service.AIService aiService;
+
     @PostMapping(value = "/report", consumes = {"multipart/form-data"})
     public ResponseEntity<?> reportFoundItem(
             @RequestPart("itemName") String itemName,
@@ -78,6 +84,16 @@ public class FoundItemController {
             }
 
             foundItemRepository.save(item);
+
+            // After saving, analyze for possible matches asynchronously
+            new Thread(() -> {
+                try {
+                    java.util.List<com.campustrack.lostandfound.model.LostItem> lostItems = lostItemRepository.findAll();
+                    aiService.analyzeAndSaveMatches(item, lostItems);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
 
             Map<String, Object> res = new HashMap<>();
             res.put("message", "✅ Found item reported successfully!");
