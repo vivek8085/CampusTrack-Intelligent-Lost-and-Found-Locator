@@ -80,6 +80,8 @@ CampusTrack/
  │   │   │    ├── LostItemForm.jsx
  │   │   │    ├── ViewFoundItems.jsx
  │   │   │    ├── ViewLostItems.jsx
+ │   │   │    ├── AttributeMatcher.jsx
+ │   │   │    ├── MatchSidebar.jsx
  │   │   ├── utils/
  |   |   |    ├── api.js
  │   │   └── App.jsx
