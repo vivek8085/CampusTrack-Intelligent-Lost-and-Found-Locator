@@ -11,6 +11,7 @@ export default function FoundItemForm({ user, onSuccess }) {
     about: "",
     foundDateTime: "",
     image: null,
+    reporterEmail: "",
   });
 
   const [message, setMessage] = useState("");
@@ -34,6 +35,7 @@ export default function FoundItemForm({ user, onSuccess }) {
       about: "",
       foundDateTime: "",
       image: null,
+      reporterEmail: "",
     });
     setMessage("");
   };
@@ -42,7 +44,10 @@ export default function FoundItemForm({ user, onSuccess }) {
     e.preventDefault();
     const data = new FormData();
     Object.keys(formData).forEach((key) => {
-      if (formData[key]) data.append(key, formData[key]);
+      const val = formData[key];
+      if (val === null || val === undefined) return;
+      if (typeof val === 'string' && val.trim() === '') return;
+      data.append(key, val);
     });
 
     try {
@@ -83,6 +88,15 @@ export default function FoundItemForm({ user, onSuccess }) {
             />
           )
         )}
+
+        <input
+          type="email"
+          name="reporterEmail"
+          value={formData.reporterEmail}
+          onChange={handleChange}
+          placeholder="Your email (contact for pickup)"
+          className="w-full border rounded p-2"
+        />
 
         <input
           type="datetime-local"

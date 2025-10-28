@@ -37,14 +37,15 @@ public class FoundItemController {
 
     @PostMapping(value = "/report", consumes = {"multipart/form-data"})
     public ResponseEntity<?> reportFoundItem(
-            @RequestPart("itemName") String itemName,
-            @RequestPart("brand") String brand,
-            @RequestPart("modelNo") String modelNo,
-            @RequestPart("size") String size,
-            @RequestPart("location") String location,
-            @RequestPart("about") String about,
-            @RequestPart("foundDateTime") String foundDateTime,
-            @RequestPart(value = "image", required = false) MultipartFile image
+        @RequestPart("itemName") String itemName,
+        @RequestPart("brand") String brand,
+        @RequestPart("modelNo") String modelNo,
+        @RequestPart("size") String size,
+        @RequestPart("location") String location,
+        @RequestPart("about") String about,
+        @RequestPart("foundDateTime") String foundDateTime,
+        @RequestPart(value = "image", required = false) MultipartFile image,
+        @RequestPart(value = "reporterEmail", required = false) String reporterEmail
     ) {
         try {
             FoundItem item = new FoundItem();
@@ -54,6 +55,10 @@ public class FoundItemController {
             item.setSize(size);
             item.setLocation(location);
             item.setAbout(about);
+            // optional reporter contact
+            if (reporterEmail != null && !reporterEmail.isBlank()) {
+                item.setReporterEmail(reporterEmail.trim());
+            }
 
             // ✅ Handle found date/time safely
             try {

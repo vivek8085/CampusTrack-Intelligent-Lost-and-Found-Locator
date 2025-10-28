@@ -3,7 +3,6 @@ import os
 
 app = FastAPI()
 
-# Try to import heavy models; if unavailable, fall back to deterministic embeddings
 try:
     from sentence_transformers import SentenceTransformer
     from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
@@ -36,7 +35,7 @@ try:
         return {"status": "success", "embedding_vector": combined_emb.tolist()}
 
 except Exception as e:
-    # Fallback lightweight deterministic embedding generator
+    
     import hashlib
     import json
 

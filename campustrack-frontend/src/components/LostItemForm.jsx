@@ -10,6 +10,7 @@ export default function LostItemForm({ onSuccess }) {
     location: "",
     about: "",
     lostDateTime: "",
+    reporterEmail: "",
     image: null,
   });
 
@@ -50,6 +51,7 @@ export default function LostItemForm({ onSuccess }) {
     data.append("location", formData.location);
     data.append("about", formData.about);
     data.append("lostDateTime", formData.lostDateTime);
+  if (formData.reporterEmail) data.append("reporterEmail", formData.reporterEmail);
     if (formData.image) data.append("image", formData.image);
 
     try {
@@ -138,6 +140,15 @@ export default function LostItemForm({ onSuccess }) {
           onChange={handleChange}
           className="w-full p-2 border rounded"
           required
+        />
+
+        <input
+          type="email"
+          name="reporterEmail"
+          value={formData.reporterEmail}
+          onChange={handleChange}
+          placeholder="Your email (contact for return)"
+          className="w-full p-2 border rounded"
         />
 
         <div className="flex items-center justify-between">

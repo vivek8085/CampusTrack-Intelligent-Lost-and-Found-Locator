@@ -3,14 +3,13 @@ import LoginSignup from "./components/LoginSignup";
 import LostItemForm from "./components/LostItemForm";
 import FoundItemForm from "./components/FoundItemForm";
 import ViewLostItems from "./components/ViewLostItems";
-import MatchSidebar from "./components/MatchSidebar";
 import AttributeMatcher from "./components/AttributeMatcher";
+import Notifications from "./components/Notifications";
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState("report-lost"); // default page after login
-  const [lastSubmittedFoundId, setLastSubmittedFoundId] = useState(null);
-  const [lastSubmittedLostId, setLastSubmittedLostId] = useState(null);
+  
 
   // ✅ Load session from localStorage on refresh
   useEffect(() => {
@@ -71,6 +70,14 @@ export default function App() {
             View Matches
           </button>
           <button
+            onClick={() => setPage("notifications")}
+            className={`hover:underline ${
+              page === "notifications" ? "font-bold" : ""
+            }`}
+          >
+            Notifications
+          </button>
+          <button
             onClick={handleLogout}
             className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm"
           >
@@ -87,23 +94,21 @@ export default function App() {
             <AttributeMatcher />
           </div>
         )}
+        {page === "notifications" && (
+          <div className="p-2">
+            <Notifications />
+          </div>
+        )}
 
         {(page === "report-lost" || page === "report-found") && (
-          <div className="flex items-start">
-            <div className="flex-1">
-              {page === "report-lost" && (
-                <LostItemForm onSuccess={(id) => setLastSubmittedLostId(id)} />
-              )}
+          <div>
+            {page === "report-lost" && (
+              <LostItemForm />
+            )}
 
-              {page === "report-found" && (
-                <FoundItemForm onSuccess={(id) => setLastSubmittedFoundId(id)} />
-              )}
-            </div>
-
-            <div className="w-80 ml-6">
-              {/* Show sidebar when a found or lost item was just submitted */}
-              <MatchSidebar foundId={lastSubmittedFoundId} lostId={lastSubmittedLostId} highlightLostId={lastSubmittedLostId} />
-            </div>
+            {page === "report-found" && (
+              <FoundItemForm />
+            )}
           </div>
         )}
       </div>

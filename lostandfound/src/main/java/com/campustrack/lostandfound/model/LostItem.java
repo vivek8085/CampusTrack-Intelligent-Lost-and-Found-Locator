@@ -25,4 +25,6 @@ public class LostItem {
 
     private LocalDateTime lostDateTime;
     private String imageUrl;
+    // Email/contact of the person who reported the lost item (optional)
+    private String reporterEmail;
 }

@@ -20,4 +20,6 @@ public class FoundItem {
     private String about;
     private LocalDateTime foundDateTime;
     private String imageUrl;
+    // Email/contact of the person who reported the found item (optional)
+    private String reporterEmail;
 }

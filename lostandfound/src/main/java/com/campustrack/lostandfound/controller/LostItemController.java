@@ -41,7 +41,8 @@ public class LostItemController {
             @RequestPart("size") String size,
             @RequestPart("location") String location,
             @RequestPart("about") String about,
-            @RequestPart("lostDateTime") String lostDateTime,
+        @RequestPart("lostDateTime") String lostDateTime,
+        @RequestPart(value = "reporterEmail", required = false) String reporterEmail,
             @RequestPart(value = "image", required = false) MultipartFile image
     ) {
         try {
@@ -80,6 +81,10 @@ public class LostItemController {
                 item.setImageUrl("/uploads/" + fileName);
             }
 
+            // optional reporter contact
+            if (reporterEmail != null && !reporterEmail.isBlank()) {
+                item.setReporterEmail(reporterEmail.trim());
+            }
             lostItemRepository.save(item);
 
             // analyze against found items asynchronously

@@ -16,6 +16,9 @@ public class MatchConfirmationController {
     @Autowired
     private ConfirmedMatchRepository confirmedMatchRepository;
 
+    @Autowired
+    private com.campustrack.lostandfound.service.NotificationService notificationService;
+
     @PostMapping
     public ResponseEntity<?> confirmMatch(@RequestBody Map<String, Object> body) {
         try {
@@ -33,6 +36,14 @@ public class MatchConfirmationController {
             cm.setConfirmedAt(java.time.LocalDateTime.now());
 
             ConfirmedMatch saved = confirmedMatchRepository.save(cm);
+            // create notification for the lost item reporter
+            try {
+                notificationService.createConfirmationNotification(foundItemId, lostItemId);
+            } catch (Exception ignore) {
+                // don't fail the request if notification creation fails
+                ignore.printStackTrace();
+            }
+
             return ResponseEntity.ok(Map.of("message", "Confirmation saved", "id", saved.getId()));
         } catch (Exception e) {
             e.printStackTrace();

@@ -68,8 +68,8 @@ export default function MatchSidebar({ foundId, lostId, highlightLostId }) {
 
   return (
     <aside className="w-80 bg-white p-4 rounded-lg shadow ml-6">
-      <h3 className="text-lg font-semibold mb-3">🧠 Suggested Matches</h3>
-      {!foundId && <div className="text-sm text-gray-500">Submit a found item to see suggestions.</div>}
+  <h3 className="text-lg font-semibold mb-3">Suggested Matches</h3>
+  {!foundId && null}
 
       {loading && foundId && <div className="text-sm text-gray-600">Analyzing... please wait.</div>}
 

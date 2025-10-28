@@ -36,7 +36,7 @@ export default function LoginSignup({ onLogin }) {
         ? { email: form.email, password: form.password }
         : { name: form.name, email: form.email, password: form.password };
 
-      const res = await axios.post(url, payload);
+  const res = await axios.post(url, payload, { withCredentials: true });
       setMsg(res.data.message);
 
       if (isLogin && res.data.message.includes("successful")) {
