@@ -54,7 +54,7 @@ public class LostItemController {
             item.setLocation(location);
             item.setAbout(about);
 
-            // ✅ Handle date parsing safely
+            // Handle date parsing safely
             try {
                 item.setLostDateTime(LocalDateTime.parse(lostDateTime));
             } catch (DateTimeParseException e) {
@@ -62,7 +62,7 @@ public class LostItemController {
                 item.setLostDateTime(LocalDateTime.now());
             }
 
-            // ✅ Handle image upload and store relative path
+            // Handle image upload and store relative path
             if (image != null && !image.isEmpty()) {
                 String projectDir = System.getProperty("user.dir");
                 String uploadDir = projectDir + File.separator + "uploads";
@@ -125,7 +125,7 @@ public class LostItemController {
         }
     }
 
-    // ✅ Fetch all reported lost items
+    // Fetch all reported lost items
     @GetMapping("/all")
     public ResponseEntity<?> getAllLostItems() {
         try {
@@ -137,7 +137,7 @@ public class LostItemController {
         }
     }
 
-    // ✅ Enable serving uploaded images
+    // Enable serving uploaded images
     @Bean
     public WebMvcConfigurer webMvcConfigurer() {
         return new WebMvcConfigurer() {

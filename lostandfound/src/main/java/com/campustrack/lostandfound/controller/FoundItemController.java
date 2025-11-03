@@ -60,14 +60,14 @@ public class FoundItemController {
                 item.setReporterEmail(reporterEmail.trim());
             }
 
-            // ✅ Handle found date/time safely
+            // Handle found date/time safely
             try {
                 item.setFoundDateTime(LocalDateTime.parse(foundDateTime));
             } catch (DateTimeParseException e) {
                 item.setFoundDateTime(LocalDateTime.now());
             }
 
-            // ✅ Handle image upload
+            // Handle image upload
             if (image != null && !image.isEmpty()) {
                 String projectDir = System.getProperty("user.dir");
                 Path uploadDirPath = Paths.get(projectDir, "uploads");
@@ -116,7 +116,7 @@ public class FoundItemController {
         }
     }
 
-    // ✅ Fetch all found items
+    // Fetch all found items
     @GetMapping("/all")
     public ResponseEntity<List<FoundItem>> getAllFoundItems() {
         List<FoundItem> items = foundItemRepository.findAll();

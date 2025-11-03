@@ -48,7 +48,7 @@ const ViewLostItems = () => {
           {items.map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-2xl shadow-lg p-4 hover:shadow-2xl transition duration-200"
+              className="bg-white rounded-2xl shadow-lg p-4 hover:shadow-2xl transition duration-200 item-card"
             >
               {item.imageUrl ? (
                 <img

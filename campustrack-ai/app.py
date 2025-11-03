@@ -14,10 +14,10 @@ try:
 
     @app.post("/predict_match/")
     async def predict_match(description: str = Form(...), image_file: UploadFile = None):
-        # Get embeddings for description
+        # for description
         text_emb = text_model.encode([description])[0]
 
-        # Get embeddings for image
+        # image
         img_emb = None
         if image_file:
             contents = await image_file.read()
@@ -61,7 +61,6 @@ except Exception as e:
             # use hash of bytes to derive deterministic image embedding
             h = hashlib.sha256(contents).digest()
             emb_img = [b / 255.0 for b in h]
-            # pad to same length
             if len(emb_img) < 128:
                 emb_img = (emb_img * ((128 // len(emb_img)) + 1))[:128]
 

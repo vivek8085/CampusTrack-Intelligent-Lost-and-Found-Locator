@@ -14,14 +14,15 @@ export default function FoundItemForm({ user, onSuccess }) {
     reporterEmail: "",
   });
 
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "image") {
-      setFormData({ ...formData, image: files[0] });
+      setFormData((s) => ({ ...s, image: files[0] }));
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((s) => ({ ...s, [name]: value }));
     }
   };
 
@@ -55,80 +56,79 @@ export default function FoundItemForm({ user, onSuccess }) {
         withCredentials: true,
       });
 
-  alert(res.data.message || "✅ Found item reported successfully!");
-  handleReset();
-  if (onSuccess && res.data.itemId) onSuccess(res.data.itemId);
+      alert(res.data.message || "✅ Found item reported successfully!");
+      handleReset();
+      if (onSuccess && res.data.itemId) onSuccess(res.data.itemId);
     } catch (err) {
       alert(err.response?.data?.message || "❌ Failed to submit found item");
     }
   };
 
   return (
-    <div className="max-w-lg mx-auto bg-white shadow-md rounded-lg p-6">
-      <h2 className="text-2xl font-semibold mb-4 text-center text-green-600">
-        🟢 Report Found Item
-      </h2>
+    <div className="w-full max-w-lg mx-auto" style={{ color: "var(--card-text-color)" }}>
+      <h2 className="text-2xl font-semibold mb-4 text-center text-green-600">🟢 Report Found Item</h2>
 
       {message && (
         <div className="text-center mb-3 text-sm text-red-500">{message}</div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {["itemName", "brand", "modelNo", "size", "location", "about"].map(
-          (field) => (
-            <input
-              key={field}
-              type="text"
-              name={field}
-              value={formData[field]}
-              onChange={handleChange}
-              placeholder={field.replace(/([A-Z])/g, " $1")}
-              className="w-full border rounded p-2"
-              required
-            />
-          )
+        <div className="form-field">
+          <input id="fi_itemName" name="itemName" value={formData.itemName} onChange={handleChange} placeholder=" " required />
+          <label htmlFor="fi_itemName">Item Name</label>
+        </div>
+
+        <div className="form-field">
+          <input id="fi_brand" name="brand" value={formData.brand} onChange={handleChange} placeholder=" " required />
+          <label htmlFor="fi_brand">Brand</label>
+        </div>
+
+        <button type="button" onClick={() => setShowAdvanced((s) => !s)} className="text-sm small-muted">
+          {showAdvanced ? "Hide optional fields" : "Show optional fields"}
+        </button>
+
+        {showAdvanced && (
+          <>
+            <div className="form-field">
+              <input id="fi_modelNo" name="modelNo" value={formData.modelNo} onChange={handleChange} placeholder=" " />
+              <label htmlFor="fi_modelNo">Model No</label>
+            </div>
+
+            <div className="form-field">
+              <input id="fi_size" name="size" value={formData.size} onChange={handleChange} placeholder=" " />
+              <label htmlFor="fi_size">Size</label>
+            </div>
+          </>
         )}
 
-        <input
-          type="email"
-          name="reporterEmail"
-          value={formData.reporterEmail}
-          onChange={handleChange}
-          placeholder="Your email (contact for pickup)"
-          className="w-full border rounded p-2"
-        />
+        <div className="form-field">
+          <input id="fi_location" name="location" value={formData.location} onChange={handleChange} placeholder=" " />
+          <label htmlFor="fi_location">Found Location</label>
+        </div>
 
-        <input
-          type="datetime-local"
-          name="foundDateTime"
-          value={formData.foundDateTime}
-          onChange={handleChange}
-          className="w-full border rounded p-2"
-          required
-        />
+        <div className="form-field">
+          <textarea id="fi_about" name="about" value={formData.about} onChange={handleChange} placeholder=" " rows={4} />
+          <label htmlFor="fi_about">About item</label>
+          <div className="small-muted">{formData.about.length}/500</div>
+        </div>
 
-        <input
-          type="file"
-          name="image"
-          accept="image/*"
-          onChange={handleChange}
-          className="w-full border rounded p-2"
-        />
+        <div className="form-field">
+          <input id="fi_foundDateTime" name="foundDateTime" type="datetime-local" value={formData.foundDateTime} onChange={handleChange} placeholder=" " required />
+          <label htmlFor="fi_foundDateTime">Found Date & Time</label>
+        </div>
 
-        <div className="flex justify-between">
-          <button
-            type="submit"
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-          >
-            Submit
-          </button>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded"
-          >
-            Reset
-          </button>
+        <div className="form-field">
+          <input id="fi_reporterEmail" name="reporterEmail" type="email" value={formData.reporterEmail} onChange={handleChange} placeholder=" " />
+          <label htmlFor="fi_reporterEmail">Your email (optional)</label>
+        </div>
+
+        <div className="form-field">
+          <input id="fi_image" name="image" type="file" accept="image/*" onChange={handleChange} className="text-sm" />
+        </div>
+
+        <div className="form-actions">
+          <button type="submit" className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">Submit</button>
+          <button type="button" onClick={handleReset} className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded transition">Reset</button>
         </div>
       </form>
     </div>

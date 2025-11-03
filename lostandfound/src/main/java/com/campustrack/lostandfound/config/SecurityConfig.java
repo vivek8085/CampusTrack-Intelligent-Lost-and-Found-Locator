@@ -19,7 +19,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ Allow signup, login, and lost item reporting without authentication
+                        // Allow signup, login, and lost item reporting without authentication
                         .requestMatchers("/api/auth/**", "/api/lostitems/**").permitAll()
                         .anyRequest().permitAll()
                 );
@@ -27,7 +27,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ✅ Allow frontend origin
+    // Allow frontend origin
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();

@@ -39,7 +39,7 @@ const ViewFoundItems = () => {
           {foundItems.map((item) => (
             <div
               key={item.id}
-              className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-2xl transition-all duration-300"
+              className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-2xl transition-all duration-300 item-card"
             >
               {item.imageUrl ? (
                 <img
