@@ -42,11 +42,19 @@ const ViewFoundItems = () => {
               className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-2xl transition-all duration-300 item-card"
             >
               {item.imageUrl ? (
-                <img
-                  src={`file:///${item.imageUrl}`}
-                  alt={item.itemName}
-                  className="rounded-lg w-full h-48 object-cover mb-4"
-                />
+                (() => {
+                  // Use server URL when imageUrl is served from backend (/uploads/...)
+                  const src = item.imageUrl.startsWith('/uploads/')
+                    ? `http://localhost:8080${item.imageUrl}`
+                    : item.imageUrl;
+                  return (
+                    <img
+                      src={src}
+                      alt={item.itemName}
+                      className="rounded-lg w-full h-48 object-cover mb-4"
+                    />
+                  );
+                })()
               ) : (
                 <div className="bg-gray-200 w-full h-48 flex items-center justify-center text-gray-500 rounded-lg">
                   No Image

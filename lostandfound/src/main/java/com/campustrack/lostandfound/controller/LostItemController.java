@@ -81,9 +81,14 @@ public class LostItemController {
                 item.setImageUrl("/uploads/" + fileName);
             }
 
-            // optional reporter contact
+            // optional reporter contact - restrict to university domain
             if (reporterEmail != null && !reporterEmail.isBlank()) {
-                item.setReporterEmail(reporterEmail.trim());
+                String r = reporterEmail.trim();
+                if (!r.toLowerCase().endsWith("@university.edu")) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("message", "Reporter email must be an @university.edu address"));
+                }
+                item.setReporterEmail(r);
             }
             lostItemRepository.save(item);
 

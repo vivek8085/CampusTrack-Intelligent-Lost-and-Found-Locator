@@ -13,4 +13,6 @@ public class User {
     private String name;
     private String email;
     private String password;
+    private String role = "user"; // 'user' or 'admin'
+    private String adminId; // optional admin identifier (e.g., 2UI123)
 }

@@ -51,6 +51,12 @@ export default function FoundItemForm({ user, onSuccess }) {
       data.append(key, val);
     });
 
+    // validate optional reporter email domain
+    if (formData.reporterEmail && !formData.reporterEmail.trim().toLowerCase().endsWith('@university.edu')) {
+      alert('Reporter email must be an @university.edu address');
+      return;
+    }
+
     try {
       const res = await axios.post("http://localhost:8080/api/founditems/report", data, {
         withCredentials: true,

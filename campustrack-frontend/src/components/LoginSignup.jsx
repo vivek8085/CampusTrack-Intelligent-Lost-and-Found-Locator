@@ -7,6 +7,8 @@ export default function LoginSignup({ onLogin }) {
   const [msg, setMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [adminId, setAdminId] = useState('');
 
   // Password strength helper
   const passwordStrength = (pw) => {
@@ -37,19 +39,24 @@ export default function LoginSignup({ onLogin }) {
       return;
     }
 
+    // Restrict to university email domain
+    const email = (form.email || '').trim().toLowerCase();
+    if (!email.endsWith('@university.edu')) {
+      setMsg('❌ Only @university.edu email addresses are allowed.');
+      return;
+    }
+
     try {
-      const url = `http://localhost:8080/api/auth/${
-        isLogin ? "login" : "signup"
-      }`;
-      const payload = isLogin
-        ? { email: form.email, password: form.password }
-        : { name: form.name, email: form.email, password: form.password };
+        const url = `http://localhost:8080/api/auth/${isLogin ? "login" : "signup"}`;
+        const payload = isLogin
+          ? { email: form.email, password: form.password }
+          : { name: form.name, email: form.email, password: form.password, role: isAdminMode ? 'admin' : 'user', adminId: isAdminMode ? adminId : undefined };
 
   const res = await axios.post(url, payload, { withCredentials: true });
       setMsg(res.data.message);
 
       if (isLogin && res.data.message.includes("successful")) {
-        const user = { email: form.email, name: form.name };
+        const user = { email: form.email, name: form.name, role: res.data.role || 'user' };
         localStorage.setItem("campustrack_user", JSON.stringify(user)); // ✅ Save session
         onLogin(user);
       }
@@ -78,9 +85,30 @@ export default function LoginSignup({ onLogin }) {
           onSubmit={handleSubmit}
           className={`bg-white shadow-lg p-6 rounded-lg w-full border border-gray-200 ${isLogin ? 'form-bg' : ''}`}
         >
-          <h2 className="text-center text-2xl font-bold mb-4 text-blue-600">
-            {isLogin ? "Login" : "Create your account"}
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-center text-2xl font-bold mb-0 text-blue-600">
+              {isLogin ? "Login" : (isAdminMode ? "Admin Sign Up" : "Create your account")}
+            </h2>
+            {/* Show toggle only on signup so admin signup can be selected; hide on login */}
+            {!isLogin && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">User</span>
+                <div className="relative">
+                  <input
+                    id="roleToggle"
+                    type="checkbox"
+                    checked={isAdminMode}
+                    onChange={() => setIsAdminMode((s) => !s)}
+                    className="sr-only"
+                  />
+                  <label htmlFor="roleToggle" className={`w-14 h-8 flex items-center p-1 rounded-full cursor-pointer transition-colors ${isAdminMode ? 'bg-gray-800' : 'bg-gray-300'}`}>
+                    <span className={`bg-white w-6 h-6 rounded-full shadow transform transition-transform ${isAdminMode ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </label>
+                </div>
+                <span className="text-sm text-gray-600">Admin</span>
+              </div>
+            )}
+          </div>
 
           {!isLogin && (
             <input
@@ -184,6 +212,12 @@ export default function LoginSignup({ onLogin }) {
               </button>
             </div>
           )}
+
+            {isAdminMode && !isLogin && (
+              <div className="mb-3">
+                <input type="text" placeholder="Admin ID (e.g. 2UI123)" className="border p-2 w-full mb-3 rounded" value={adminId} onChange={(e) => setAdminId(e.target.value)} required />
+              </div>
+            )}
 
           <button
             type="submit"

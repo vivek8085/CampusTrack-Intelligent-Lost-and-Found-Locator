@@ -175,6 +175,7 @@ export default function Notifications() {
                 >
                   Mark as read
                 </button>
+                {/* Chat button moved to navbar; open chat from there */}
                 <button
                   type="button"
                   className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-300"

@@ -325,3 +325,18 @@
 @media (prefers-reduced-motion: reduce) {
 	.nav-text, .nav-btn::after { transition: none; transform: none; }
 }
+
+/* Mobile-specific tweaks: hide heavy decorations and reduce spacings */
+@media (max-width: 640px) {
+	.blob { display: none; }
+	.glass-card { padding: 1rem; margin-top: 1rem; }
+	.nav-text { font-size: 0.9rem; }
+	.brand-animated { font-size: 1.25rem; }
+	.item-card h2 { font-size: 1.05rem; }
+	.welcome-panel { padding: 1rem; }
+}
+
+/* Small and medium screens: ensure sidebars stack below main content */
+@media (max-width: 768px) {
+	.app-root .glass-card { padding-left: 0.75rem; padding-right: 0.75rem; }
+}
