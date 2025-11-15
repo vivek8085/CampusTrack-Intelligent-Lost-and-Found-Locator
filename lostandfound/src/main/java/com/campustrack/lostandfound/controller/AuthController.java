@@ -38,9 +38,16 @@ public class AuthController {
                 return res;
             }
         }
-
-        userService.register(user);
-        res.put("message", "Signup successful!");
+        try {
+            userService.register(user);
+            res.put("message", "Signup successful!");
+        } catch (IllegalStateException ex) {
+            res.put("message", "Signup failed: email already in use");
+        } catch (IllegalArgumentException ex) {
+            res.put("message", "Signup failed: " + ex.getMessage());
+        } catch (Exception ex) {
+            res.put("message", "Signup failed: unexpected error");
+        }
         return res;
     }
 
@@ -58,6 +65,13 @@ public class AuthController {
         if (valid) {
             // fetch persisted user to determine their actual role (do NOT trust payload)
             var u = userRepository.findByEmail(email);
+            // if account is blocked, return blocked info and do not create a session
+            if (u != null && u.isBlocked()) {
+                res.put("message", "Account blocked");
+                res.put("blocked", "true");
+                if (u.getBlockedReason() != null) res.put("reason", u.getBlockedReason());
+                return res;
+            }
             String role = (u != null && u.getRole() != null) ? u.getRole() : "user";
             // store user email and derived role in session
             session.setAttribute("userEmail", email);

@@ -1,0 +1,115 @@
+:root{
+  --bg: #0f172a;
+  --card-bg: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,250,251,0.98));
+  --accent: #06b6d4; /* cyan-400 */
+  --accent-2: #0ea5e9; /* sky-500 */
+  --danger: #ef4444;
+  --muted: #64748b;
+  --glass: rgba(255,255,255,0.06);
+}
+
+.admin-container{ position: relative; background: linear-gradient(180deg,#f8fafc,white); min-height:100vh; }
+
+.anim-grid{ animation: fadeInUp 420ms ease both; }
+
+.anim-card{ background: var(--card-bg); border: 1px solid rgba(2,6,23,0.04); padding: 1rem; border-radius: 10px; transition: transform .22s cubic-bezier(.2,.9,.2,1), box-shadow .22s ease; position: relative; overflow: visible; }
+.anim-card:hover{ transform: translateY(-6px); box-shadow: 0 18px 40px rgba(2,6,23,0.08); }
+
+/* Neon glow around each card (scoped to cards only) */
+.anim-card::before{
+  /* outer animated gradient ring */
+  content: "";
+  position: absolute;
+  top: -4px; left: -4px; right: -4px; bottom: -4px;
+  z-index: -2;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(6,182,212,0.95), rgba(14,165,233,0.9), rgba(236,72,153,0.85));
+  background-size: 200% 200%;
+  pointer-events: none;
+  transform: translateZ(0);
+  animation: neonBorderMove 6s linear infinite;
+}
+.anim-card::after{
+  /* inner cover that hides the center, leaving only the border visible */
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px; right: 2px; bottom: 2px;
+  z-index: -1;
+  border-radius: 10px;
+  background: var(--card-bg);
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+
+@keyframes neonBorderMove{
+  0%{ background-position: 0% 50%; }
+  50%{ background-position: 100% 50%; }
+  100%{ background-position: 0% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .anim-card::before{ animation: none; }
+}
+
+.glass-nav{ background: linear-gradient(90deg, rgba(14,165,233,0.08), rgba(236,72,153,0.04)); border-bottom: 1px solid rgba(2,6,23,0.04); }
+.nav-btn{ transition: transform .16s ease, background-color .16s ease, color .16s ease; padding: .5rem .65rem; border-radius:8px; font-weight:600; color:var(--muted); }
+.nav-btn:hover{ transform: translateY(-3px); color:var(--accent-2); }
+.nav-active{ background: linear-gradient(90deg, rgba(14,165,233,0.12), rgba(14,165,233,0.06)); color:var(--accent-2); box-shadow: 0 6px 18px rgba(14,165,233,0.06); }
+
+table tr:hover{ background: rgba(14,165,233,0.03); }
+table tr td{ transition: background-color .14s ease; }
+
+.btn-hover{ transition: transform .14s ease, box-shadow .14s ease; }
+.btn-hover:hover{ transform: translateY(-3px); box-shadow: 0 10px 26px rgba(2,6,23,0.06); }
+
+@keyframes fadeInUp{ from{ opacity:0; transform: translateY(6px);} to{ opacity:1; transform:translateY(0);} }
+
+/* Table centering and action buttons */
+.admin-table{ margin: 0 auto; width: 100%; max-width: 1200px; border-collapse: collapse; background: transparent; }
+.admin-table thead th{ text-align: center; font-weight:700; color:#0f172a; padding:.75rem .75rem; position:sticky; top:0; background: rgba(255,255,255,0.98); }
+.admin-table th, .admin-table td{ text-align:center; vertical-align:middle; padding:.65rem .6rem; border-bottom:1px solid rgba(2,6,23,0.04); }
+.admin-table tbody tr:nth-child(odd){ background: rgba(14,165,233,0.02); }
+.admin-table .truncate{ max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.table-actions{ display:flex; gap:.5rem; justify-content:center; align-items:center; }
+.table-btn{ display:inline-flex; align-items:center; gap:.5rem; padding:.42rem .6rem; border-radius:8px; font-size:.85rem; cursor:pointer; border:1px solid transparent; }
+.table-btn.primary{ background:var(--accent-2); color:#fff; }
+.table-btn.ghost{ background:transparent; color:#0f172a; border-color:rgba(2,6,23,0.04); }
+.table-btn.danger{ background:var(--danger); color:#fff; }
+.table-btn:focus{ outline:3px solid rgba(14,165,233,0.12); }
+.table-btn:hover{ transform: translateY(-2px); }
+
+/* Responsive layout helpers */
+.overflow-auto{ overflow:auto; }
+.max-h-80{ max-height:20rem; }
+
+/* Modal centering helpers (used by Admin and Login) */
+.modal-center{ position: fixed; inset: 0; display:flex; align-items:center; justify-content:center; z-index:9999; }
+.modal-backdrop{ position:absolute; inset:0; background: linear-gradient(180deg, rgba(2,6,23,0.35), rgba(2,6,23,0.55)); }
+.modal-card{ position:relative; z-index:10000; background: linear-gradient(180deg,#ffffff,#fbfdff); border-radius:10px; max-width:760px; width:calc(100% - 48px); box-shadow: 0 24px 48px rgba(2,6,23,0.14); padding:1.1rem 1.25rem; }
+.modal-card h4{ margin-bottom:.5rem; }
+.modal-card .modal-body{ margin-bottom:.75rem; color:var(--muted); }
+.modal-actions{ display:flex; justify-content:flex-end; gap:.5rem; }
+
+/* Small screens: make nav horizontally scrollable and reduce padding */
+@media (max-width: 900px){
+  .glass-nav .flex{ gap:.4rem; }
+  .glass-nav { padding: .6rem 1rem; }
+  .glass-nav .flex { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .anim-card{ padding:.85rem; }
+  .admin-table thead th, .admin-table th, .admin-table td{ padding:.45rem .5rem; font-size:.86rem; }
+}
+
+@media (max-width: 640px){
+  .anim-grid{ grid-template-columns: 1fr; }
+  .glass-nav .flex{ gap:.35rem; }
+  .admin-table{ font-size:.88rem; }
+  .modal-card{ width: calc(100% - 28px); padding:.85rem; }
+  .admin-container{ padding-bottom: 2.5rem; }
+}
+
+/* Larger screens: slightly wider cards and subtle gradient */
+@media (min-width: 1200px){
+  .anim-card{ border-radius:12px; }
+}
+

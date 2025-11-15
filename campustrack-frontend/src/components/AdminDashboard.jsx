@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AnimatedBackground from './AnimatedBackground';
+import './AdminDashboard.css';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
-  // showPanel controls whether the full admin cards/panels are visible
-  // default: visible on desktop, collapsed on small screens
   const [showPanel, setShowPanel] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [adminView, setAdminView] = useState('dashboard');
@@ -15,6 +15,13 @@ export default function AdminDashboard() {
   const [matchedItems, setMatchedItems] = useState([]);
   const [recoveredItems, setRecoveredItems] = useState([]);
   const [reportedUsers, setReportedUsers] = useState([]);
+  // modal / selection state for viewing items
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedItemType, setSelectedItemType] = useState(null); // 'user'|'lost'|'found'|'match'|'backup'|'block'
+  const [showItemModal, setShowItemModal] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [selectedBlock, setSelectedBlock] = useState(null);
+  const [blockReason, setBlockReason] = useState('');
 
   const loadStats = async () => {
     try {
@@ -54,6 +61,177 @@ export default function AdminDashboard() {
     } catch (e) {}
   };
 
+  const viewUser = (user) => {
+    setSelectedItem(user);
+    setSelectedItemType('user');
+    setShowItemModal(true);
+  };
+
+  const viewLostItem = (item) => {
+    setSelectedItem(item);
+    setSelectedItemType('lost');
+    setShowItemModal(true);
+  };
+
+  const viewFoundItem = (item) => {
+    setSelectedItem(item);
+    setSelectedItemType('found');
+    setShowItemModal(true);
+  };
+
+  const viewMatch = (match) => {
+    setSelectedItem(match);
+    setSelectedItemType('match');
+    setShowItemModal(true);
+  };
+
+  const closeItemModal = () => {
+    setShowItemModal(false);
+    setSelectedItem(null);
+    setSelectedItemType(null);
+  };
+
+  // Try multiple likely endpoints to delete an item safely
+  async function tryDeleteCandidates(candidates) {
+    for (const c of candidates) {
+      try {
+        const res = await fetch(c.url, { method: c.method || 'POST', credentials: 'include' });
+        if (res.ok) return true;
+      } catch (e) {
+        // ignore and try next
+      }
+    }
+    return false;
+  }
+
+  const deleteLostItem = async (item) => {
+    if (!item || !window.confirm('Delete this lost item? This may be irreversible.')) return;
+    const id = item.id;
+    const host = `${location.protocol}//${location.hostname}:8080`;
+    const candidates = [
+      { url: `${host}/api/lostitems/${id}/delete`, method: 'POST' },
+      { url: `${host}/api/lostitems/${id}`, method: 'DELETE' },
+      { url: `${host}/api/admin/lost/${id}/delete`, method: 'POST' },
+    ];
+    const ok = await tryDeleteCandidates(candidates);
+    if (ok) {
+      // refresh list
+      setLostItems(prev => prev.filter(p => p.id !== id));
+      await loadStats();
+      alert('Deleted');
+    } else {
+      alert('Failed to delete - backend endpoint not available');
+    }
+  };
+
+  const deleteFoundItem = async (item) => {
+    if (!item || !window.confirm('Delete this found item? This may be irreversible.')) return;
+    const id = item.id;
+    const host = `${location.protocol}//${location.hostname}:8080`;
+    const candidates = [
+      { url: `${host}/api/founditems/${id}/delete`, method: 'POST' },
+      { url: `${host}/api/founditems/${id}`, method: 'DELETE' },
+      { url: `${host}/api/admin/found/${id}/delete`, method: 'POST' },
+    ];
+    const ok = await tryDeleteCandidates(candidates);
+    if (ok) {
+      setFoundItems(prev => prev.filter(p => p.id !== id));
+      await loadStats();
+      alert('Deleted');
+    } else {
+      alert('Failed to delete - backend endpoint not available');
+    }
+  };
+
+  // For confirmed matches, the backend exposes an archive/receive endpoint
+  const removeMatch = async (m) => {
+    if (!m || !window.confirm('Remove/confirm received for this match? This will archive and may delete related items.')) return;
+    const host = `${location.protocol}//${location.hostname}:8080`;
+    try {
+      const r = await fetch(`${host}/api/notifications/${m.id}/received`, { method: 'POST', credentials: 'include' });
+      if (r.ok) {
+        setMatchedItems(prev => prev.filter(x => (x.id || `${x.lostItemId}-${x.foundItemId}`) !== (m.id || `${m.lostItemId}-${m.foundItemId}`)));
+        await loadStats();
+        alert('Match removed / archived');
+      } else {
+        alert('Failed to remove match');
+      }
+    } catch (e) { alert('Error removing match'); }
+  };
+
+  const restoreBackup = async (b) => {
+    alert('Restore not implemented in frontend — requires backend endpoint');
+  };
+
+  const deleteBackup = async (b) => {
+    if (!b || !window.confirm('Delete this backup record?')) return;
+    const id = b.id;
+    const host = `${location.protocol}//${location.hostname}:8080`;
+    const candidates = [
+      { url: `${host}/api/backups/${id}/delete`, method: 'POST' },
+      { url: `${host}/api/admin/backups/${id}/delete`, method: 'POST' },
+      { url: `${host}/api/backups/${id}`, method: 'DELETE' },
+    ];
+    const ok = await tryDeleteCandidates(candidates);
+    if (ok) {
+      setRecoveredItems(prev => prev.filter(p => p.id !== id));
+      await loadStats();
+      alert('Deleted backup');
+    } else {
+      alert('Failed to delete backup');
+    }
+  };
+
+  const unblock = async (id) => {
+    if (!window.confirm('Remove this report/block record?')) return;
+    try {
+      await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/block/${id}/delete`, { method: 'POST', credentials: 'include' });
+      setReportedUsers(prev => prev.filter(p => p.id !== id));
+      await loadStats();
+    } catch (e) {}
+  };
+
+  const fetchBlocks = async () => {
+    try {
+      const r = await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/blocks`, { credentials: 'include' });
+      if (r.ok) setReportedUsers(await r.json());
+      else setReportedUsers([]);
+    } catch (e) { setReportedUsers([]); }
+  };
+
+  const openBlockModal = (row) => {
+    setSelectedBlock(row);
+    setBlockReason(row?.reason || '');
+    setShowBlockModal(true);
+  };
+
+  const closeBlockModal = () => {
+    setShowBlockModal(false);
+    setSelectedBlock(null);
+    setBlockReason('');
+  };
+
+  const submitBlock = async () => {
+    if (!selectedBlock) return;
+    if (!window.confirm(`Block user ${selectedBlock.blockedEmail || selectedBlock.blocked || ''}?`)) return;
+    try {
+      const params = new URLSearchParams();
+      params.set('email', (selectedBlock.blockedEmail || selectedBlock.blocked).toLowerCase());
+      if (blockReason) params.set('reason', blockReason);
+      const r = await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/blockUser?` + params.toString(), { method: 'POST', credentials: 'include' });
+      if (r.ok) {
+        // refresh blocks list
+        await fetchBlocks();
+        await loadStats();
+        closeBlockModal();
+      } else {
+        // show error (simple alert for now)
+        const txt = await r.text().catch(()=>'Error');
+        alert('Failed to block user: ' + txt);
+      }
+    } catch (e) { alert('Error blocking user'); }
+  };
+
   // Load lost/found/matched/recovered when adminView changes
   useEffect(() => {
     async function loadForView() {
@@ -79,20 +257,17 @@ export default function AdminDashboard() {
           }
           if (!ok) setRecoveredItems([]);
         } else if (adminView === 'reported-users') {
-          // build reported users from lost/found reporters
-          const [lr, fr] = await Promise.all([
-            fetch(`${location.protocol}//${location.hostname}:8080/api/lostitems/all`, { credentials: 'include' }).then(r=>r.ok? r.json():[]).catch(()=>[]),
-            fetch(`${location.protocol}//${location.hostname}:8080/api/founditems/all`, { credentials: 'include' }).then(r=>r.ok? r.json():[]).catch(()=>[])
-          ]);
-          const emails = new Set();
-          lr.forEach(l=>{ if (l.reporterEmail) emails.add(l.reporterEmail); });
-          fr.forEach(f=>{ if (f.reporterEmail) emails.add(f.reporterEmail); });
-          // map to user records when available
-          const reported = [];
-          users.forEach(u => { if (emails.has(u.email)) reported.push(u); });
-          // include emails not in users list
-          for (const e of emails) if (!reported.find(r=>r.email===e)) reported.push({ name: e.split('@')[0], email: e });
-          setReportedUsers(reported);
+          // fetch stored user blocks (reports) from the backend
+          try {
+            const r = await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/blocks`, { credentials: 'include' });
+            if (r.ok) {
+              const arr = await r.json();
+              // expected shape: { id, blockerEmail, blockedEmail, reason, createdAt }
+              setReportedUsers(arr || []);
+            } else {
+              setReportedUsers([]);
+            }
+          } catch (e) { setReportedUsers([]); }
         }
       } catch (e) { /* ignore errors */ }
     }
@@ -100,7 +275,9 @@ export default function AdminDashboard() {
   }, [adminView]);
 
   return (
-    <div>
+    <div className="relative min-h-screen admin-container">
+      <AnimatedBackground />
+      <div className="relative z-10">
       {/* top navbar inside admin dashboard */}
       <nav className="glass-nav nav-dark text-white px-6 py-3 flex justify-between items-center">
         <h1 className="text-2xl font-semibold tracking-tight">CampusTrack</h1>
@@ -121,7 +298,7 @@ export default function AdminDashboard() {
             navigate('/');
             // ensure full reload so app resets
             window.location.reload();
-          }} className="px-3 py-1 bg-red-600 text-white rounded">Logout</button>
+          }} className="px-3 py-1 bg-red-600 text-white rounded btn-hover">Logout</button>
         </div>
       </nav>
 
@@ -135,7 +312,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-      {stats ? (
+          {stats ? (
         // If collapsed on mobile show a compact summary bar, otherwise full grid
         isMobile && !showPanel ? (
           <div className="flex gap-3 overflow-x-auto mb-4">
@@ -144,10 +321,10 @@ export default function AdminDashboard() {
             <div className="p-2 bg-gray-50 rounded min-w-[140px] text-center">Found<br/><span className="text-lg font-bold">{stats.foundCount ?? 0}</span></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-            <div className="p-3 bg-gray-50 rounded">Users<br/><span className="text-2xl font-bold">{stats.totalUsers}</span></div>
-            <div className="p-3 bg-gray-50 rounded">Chats<br/><span className="text-2xl font-bold">{stats.totalChats}</span></div>
-            <div className="p-3 bg-gray-50 rounded">Blocks<br/><span className="text-2xl font-bold">{stats.totalBlocks}</span></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 anim-grid">
+            <div className="p-3 bg-gray-50 rounded anim-card">Users<br/><span className="text-2xl font-bold">{stats.totalUsers}</span></div>
+            <div className="p-3 bg-gray-50 rounded anim-card">Chats<br/><span className="text-2xl font-bold">{stats.totalChats}</span></div>
+            <div className="p-3 bg-gray-50 rounded anim-card">Blocks<br/><span className="text-2xl font-bold">{stats.totalBlocks}</span></div>
           </div>
         )
       ) : (
@@ -157,23 +334,23 @@ export default function AdminDashboard() {
       {/* Real-time dashboard panel with cards */}
       {showPanel && (
         <div className="mb-4 grid grid-cols-5 gap-3">
-          <div className="p-3 bg-white border rounded text-center">
+          <div className="p-3 bg-white border rounded text-center anim-card">
             <div className="text-sm text-gray-600">Reported Lost</div>
             <div className="text-2xl font-bold">{stats?.lostCount ?? 0}</div>
           </div>
-          <div className="p-3 bg-white border rounded text-center">
+          <div className="p-3 bg-white border rounded text-center anim-card">
             <div className="text-sm text-gray-600">Found Items</div>
             <div className="text-2xl font-bold">{stats?.foundCount ?? 0}</div>
           </div>
-          <div className="p-3 bg-white border rounded text-center">
+          <div className="p-3 bg-white border rounded text-center anim-card">
             <div className="text-sm text-gray-600">Users</div>
             <div className="text-2xl font-bold">{stats?.totalUsers ?? 0}</div>
           </div>
-          <div className="p-3 bg-white border rounded text-center">
+          <div className="p-3 bg-white border rounded text-center anim-card">
             <div className="text-sm text-gray-600">Matched</div>
             <div className="text-2xl font-bold">{stats?.matchedCount ?? 0}</div>
           </div>
-          <div className="p-3 bg-white border rounded text-center">
+          <div className="p-3 bg-white border rounded text-center anim-card">
             <div className="text-sm text-gray-600">Recovered</div>
             <div className="text-2xl font-bold">{stats?.recoveredCount ?? 0}</div>
           </div>
@@ -186,8 +363,16 @@ export default function AdminDashboard() {
           <div>
             <h3 className="text-lg font-medium mb-2">Manage Users</h3>
             <div className="overflow-auto max-h-64 mb-6">
-              <table className="w-full text-sm">
-                <thead><tr><th className="text-left">Name</th><th>Email</th><th>Role</th><th>AdminId</th><th></th></tr></thead>
+              <table className="admin-table w-full text-sm">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>AdminId</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {users.map(u => (
                     <tr key={u.id} className="border-t">
@@ -195,7 +380,12 @@ export default function AdminDashboard() {
                       <td>{u.email}</td>
                       <td>{u.role || 'user'}</td>
                       <td>{u.adminId || '-'}</td>
-                      <td className="text-right"><button onClick={() => deleteUser(u.id)} className="text-red-600">Delete</button></td>
+                      <td>
+                        <div className="table-actions">
+                          <button className="table-btn ghost" onClick={() => viewUser(u)}>View</button>
+                          <button className="table-btn danger" onClick={() => deleteUser(u.id)}>Delete</button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -204,12 +394,86 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* Generic item modal for viewing details */}
+        {showItemModal && selectedItem && (
+          <div className="modal-center" role="dialog" aria-modal="true">
+            <div className="modal-backdrop" onClick={closeItemModal}></div>
+            <div className="modal-card max-w-2xl">
+              <div className="flex justify-between items-start">
+                <h4 className="text-lg font-semibold mb-2">{selectedItemType === 'user' ? 'User' : selectedItemType === 'lost' ? 'Lost Item' : selectedItemType === 'found' ? 'Found Item' : selectedItemType === 'match' ? 'Match' : selectedItemType === 'backup' ? 'Backup' : 'Details'}</h4>
+                <button onClick={closeItemModal} className="text-sm px-2 py-1">Close</button>
+              </div>
+              <div className="modal-body text-sm text-gray-700 mb-3">
+                {selectedItemType === 'user' && (
+                  <div>
+                    <div><strong>Name:</strong> {selectedItem.name}</div>
+                    <div><strong>Email:</strong> {selectedItem.email}</div>
+                    <div><strong>Role:</strong> {selectedItem.role}</div>
+                    <div className="mt-2"><pre className="text-xs overflow-auto">{JSON.stringify(selectedItem, null, 2)}</pre></div>
+                  </div>
+                )}
+                {selectedItemType === 'lost' && (
+                  <div>
+                    {selectedItem.imageUrl && <img src={`${location.protocol}//${location.hostname}:8080${selectedItem.imageUrl}`} alt="item" className="w-full max-h-64 object-cover rounded mb-2" />}
+                    <div><strong>Title:</strong> {selectedItem.title || selectedItem.itemName}</div>
+                    <div><strong>Reporter:</strong> {selectedItem.reporterEmail || selectedItem.reporter}</div>
+                    <div><strong>Location:</strong> {selectedItem.lostLocation || selectedItem.location}</div>
+                    <div className="mt-2"><pre className="text-xs overflow-auto">{JSON.stringify(selectedItem, null, 2)}</pre></div>
+                  </div>
+                )}
+                {selectedItemType === 'found' && (
+                  <div>
+                    {selectedItem.imageUrl && <img src={`${selectedItem.imageUrl.startsWith('/uploads/') ? `${location.protocol}//${location.hostname}:8080${selectedItem.imageUrl}` : selectedItem.imageUrl}`} alt="item" className="w-full max-h-64 object-cover rounded mb-2" />}
+                    <div><strong>Title:</strong> {selectedItem.title || selectedItem.itemName}</div>
+                    <div><strong>Reporter:</strong> {selectedItem.reporterEmail || selectedItem.reporter}</div>
+                    <div><strong>Location:</strong> {selectedItem.foundLocation || selectedItem.location}</div>
+                    <div className="mt-2"><pre className="text-xs overflow-auto">{JSON.stringify(selectedItem, null, 2)}</pre></div>
+                  </div>
+                )}
+                {selectedItemType === 'match' && (
+                  <div>
+                    <div><strong>Lost:</strong> {selectedItem.lostTitle || selectedItem.lostItemId}</div>
+                    <div><strong>Found:</strong> {selectedItem.foundTitle || selectedItem.foundItemId}</div>
+                    <div><strong>Confirmed At:</strong> {selectedItem.createdAt || selectedItem.confirmedAt}</div>
+                    <div className="mt-2"><pre className="text-xs overflow-auto">{JSON.stringify(selectedItem, null, 2)}</pre></div>
+                  </div>
+                )}
+                {selectedItemType === 'backup' && (
+                  <div>
+                    <div><strong>Archived At:</strong> {selectedItem.createdAt || selectedItem.archivedAt}</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div><strong>Lost Snapshot</strong><pre className="text-xs max-h-56 overflow-auto">{selectedItem.lostItemSnapshot}</pre></div>
+                      <div><strong>Found Snapshot</strong><pre className="text-xs max-h-56 overflow-auto">{selectedItem.foundItemSnapshot}</pre></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="modal-actions flex gap-2">
+                {selectedItemType === 'lost' && <button onClick={() => { deleteLostItem(selectedItem); closeItemModal(); }} className="px-3 py-1 rounded bg-red-600 text-white">Delete Lost</button>}
+                {selectedItemType === 'found' && <button onClick={() => { deleteFoundItem(selectedItem); closeItemModal(); }} className="px-3 py-1 rounded bg-red-600 text-white">Delete Found</button>}
+                {selectedItemType === 'match' && <button onClick={() => { removeMatch(selectedItem); closeItemModal(); }} className="px-3 py-1 rounded bg-red-600 text-white">Remove Match</button>}
+                {selectedItemType === 'backup' && <><button onClick={() => { restoreBackup(selectedItem); closeItemModal(); }} className="px-3 py-1 rounded bg-green-600 text-white">Restore</button>
+                <button onClick={() => { deleteBackup(selectedItem); closeItemModal(); }} className="px-3 py-1 rounded bg-red-600 text-white">Delete Backup</button></>}
+                <button onClick={closeItemModal} className="px-3 py-1 rounded border">Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {adminView === 'manage-users' && (
           <div>
             <h3 className="text-lg font-medium mb-2">Manage Users</h3>
             <div className="overflow-auto max-h-80">
-              <table className="w-full text-sm">
-                <thead><tr><th className="text-left">Name</th><th>Email</th><th>Role</th><th>AdminId</th><th></th></tr></thead>
+              <table className="admin-table w-full text-sm">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>AdminId</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {users.map(u => (
                     <tr key={u.id} className="border-t">
@@ -217,7 +481,12 @@ export default function AdminDashboard() {
                       <td>{u.email}</td>
                       <td>{u.role || 'user'}</td>
                       <td>{u.adminId || '-'}</td>
-                      <td className="text-right"><button onClick={() => deleteUser(u.id)} className="text-red-600">Delete</button></td>
+                      <td>
+                        <div className="table-actions">
+                          <button className="table-btn ghost" onClick={() => viewUser(u)}>View</button>
+                          <button className="table-btn danger" onClick={() => deleteUser(u.id)}>Delete</button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -230,8 +499,16 @@ export default function AdminDashboard() {
           <div>
             <h3 className="text-lg font-medium mb-2">All Lost Items</h3>
             <div className="overflow-auto max-h-80">
-              <table className="w-full text-sm">
-                <thead><tr><th>Title</th><th>Reporter</th><th>Location</th><th>Date</th></tr></thead>
+              <table className="admin-table w-full text-sm">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Reporter</th>
+                    <th>Location</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {lostItems.map(l => (
                     <tr key={l.id} className="border-t">
@@ -239,6 +516,12 @@ export default function AdminDashboard() {
                       <td>{l.reporterEmail || l.reporter || '-'}</td>
                       <td>{l.lostLocation || l.location || '-'}</td>
                       <td>{l.lostAt || l.createdAt || '-'}</td>
+                      <td>
+                        <div className="table-actions">
+                          <button className="table-btn ghost" onClick={() => viewLostItem(l)}>View</button>
+                          <button className="table-btn danger" onClick={() => deleteLostItem(l)}>Delete</button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -251,8 +534,16 @@ export default function AdminDashboard() {
           <div>
             <h3 className="text-lg font-medium mb-2">All Found Items</h3>
             <div className="overflow-auto max-h-80">
-              <table className="w-full text-sm">
-                <thead><tr><th>Title</th><th>Reporter</th><th>Location</th><th>Date</th></tr></thead>
+              <table className="admin-table w-full text-sm">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Reporter</th>
+                    <th>Location</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {foundItems.map(f => (
                     <tr key={f.id} className="border-t">
@@ -260,6 +551,12 @@ export default function AdminDashboard() {
                       <td>{f.reporterEmail || f.reporter || '-'}</td>
                       <td>{f.foundLocation || f.location || '-'}</td>
                       <td>{f.foundAt || f.createdAt || '-'}</td>
+                      <td>
+                        <div className="table-actions">
+                          <button className="table-btn ghost" onClick={() => viewFoundItem(f)}>View</button>
+                          <button className="table-btn danger" onClick={() => deleteFoundItem(f)}>Delete</button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -272,13 +569,29 @@ export default function AdminDashboard() {
           <div>
             <h3 className="text-lg font-medium mb-2">Reported Users</h3>
             <div className="overflow-auto max-h-80">
-              <table className="w-full text-sm">
-                <thead><tr><th>Name/Email</th><th></th></tr></thead>
+              <table className="admin-table w-full text-sm">
+                <thead>
+                  <tr>
+                    <th>Reporter</th>
+                    <th>Reported</th>
+                    <th>Reason</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {reportedUsers.map(u => (
-                    <tr key={u.email || u.id} className="border-t">
-                      <td>{u.name || '-'} ({u.email})</td>
-                      <td className="text-right"><button onClick={() => { if (u.id) deleteUser(u.id); }} className="text-red-600">Delete (if exists)</button></td>
+                  {reportedUsers.map(r => (
+                    <tr key={r.id || `${r.blockerEmail}-${r.blockedEmail}-${r.createdAt}`} className="border-t">
+                      <td className="whitespace-nowrap">{r.blockerEmail || r.blocker || '-'}</td>
+                      <td className="whitespace-nowrap">{r.blockedEmail || r.blocked || '-'}</td>
+                      <td className="max-w-xs text-sm text-gray-700"><div className="truncate">{r.reason || '-'}</div></td>
+                      <td className="whitespace-nowrap">{r.createdAt || r.createdAtString || '-'}</td>
+                      <td>
+                        <div className="table-actions">
+                          <button className="table-btn ghost" onClick={() => openBlockModal(r)}>View</button>
+                          <button className="table-btn danger" onClick={() => unblock(r.id)}>Unblock</button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -287,18 +600,51 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* Block modal */}
+        {showBlockModal && selectedBlock && (
+          <div className="modal-center" role="dialog" aria-modal="true">
+            <div className="modal-backdrop" onClick={closeBlockModal}></div>
+            <div className="modal-card">
+              <h4 className="text-lg font-semibold mb-2">Block User: {selectedBlock.blockedEmail || selectedBlock.blocked}</h4>
+              <div className="modal-body text-sm text-gray-700 mb-2">Reporter: {selectedBlock.blockerEmail || selectedBlock.blocker || '-'}</div>
+              <div className="modal-body text-sm text-gray-700 mb-2">Original reason (if any): {selectedBlock.reason || '-'}</div>
+              <div className="mb-2">
+                <label className="text-sm font-medium">Add / edit admin reason</label>
+                <textarea className="w-full border rounded p-2 mt-1" rows={4} value={blockReason} onChange={(e) => setBlockReason(e.target.value)} placeholder="Reason (optional)" />
+              </div>
+              <div className="modal-actions">
+                <button onClick={closeBlockModal} className="px-3 py-1 rounded border">Cancel</button>
+                <button onClick={submitBlock} className="px-3 py-1 rounded bg-red-600 text-white">Block User</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {adminView === 'matched-items' && (
           <div>
             <h3 className="text-lg font-medium mb-2">Matched / Confirmed Items</h3>
             <div className="overflow-auto max-h-80">
-              <table className="w-full text-sm">
-                <thead><tr><th>Lost Item</th><th>Found Item</th><th>Confirmed At</th></tr></thead>
+              <table className="admin-table w-full text-sm">
+                <thead>
+                  <tr>
+                    <th>Lost Item</th>
+                    <th>Found Item</th>
+                    <th>Confirmed At</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {matchedItems.map(m => (
                     <tr key={m.id || `${m.lostItemId}-${m.foundItemId}`} className="border-t">
                       <td>{m.lostItemId || m.lostTitle || '-'}</td>
                       <td>{m.foundItemId || m.foundTitle || '-'}</td>
                       <td>{m.createdAt || m.confirmedAt || '-'}</td>
+                      <td>
+                        <div className="table-actions">
+                          <button className="table-btn ghost" onClick={() => viewMatch(m)}>View</button>
+                          <button className="table-btn danger" onClick={() => removeMatch(m)}>Remove</button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -314,14 +660,27 @@ export default function AdminDashboard() {
               {recoveredItems.length === 0 ? (
                 <div className="text-sm text-gray-600">No recovered items endpoint found or no records. If you want backend listing, add a /api/admin/backups endpoint that returns backup records.</div>
               ) : (
-                <table className="w-full text-sm">
-                  <thead><tr><th>Lost Snapshot</th><th>Found Snapshot</th><th>Archived At</th></tr></thead>
+                <table className="admin-table w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th>Lost Snapshot</th>
+                      <th>Found Snapshot</th>
+                      <th>Archived At</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {recoveredItems.map(r => (
                       <tr key={r.id} className="border-t">
                         <td><pre className="text-xs max-h-28 overflow-auto">{r.lostItemSnapshot}</pre></td>
                         <td><pre className="text-xs max-h-28 overflow-auto">{r.foundItemSnapshot}</pre></td>
                         <td>{r.createdAt || r.archivedAt || '-'}</td>
+                        <td>
+                          <div className="table-actions">
+                            <button className="table-btn ghost" onClick={() => restoreBackup(r)}>Restore</button>
+                            <button className="table-btn danger" onClick={() => deleteBackup(r)}>Delete</button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -330,8 +689,9 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
-    </div>
+  </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import './AdminDashboard.css';
 
 export default function LoginSignup({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,6 +10,8 @@ export default function LoginSignup({ onLogin }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [adminId, setAdminId] = useState('');
+  const [showBlockedModal, setShowBlockedModal] = useState(false);
+  const [blockedReason, setBlockedReason] = useState('');
 
   // Password strength helper
   const passwordStrength = (pw) => {
@@ -55,7 +58,14 @@ export default function LoginSignup({ onLogin }) {
   const res = await axios.post(url, payload, { withCredentials: true });
       setMsg(res.data.message);
 
-      if (isLogin && res.data.message.includes("successful")) {
+      if (isLogin && (res.data.blocked === true || res.data.blocked === 'true' || (res.data.message && res.data.message.toLowerCase().includes('blocked')))) {
+        // blocked: show modal with reason
+        setBlockedReason(res.data.reason || res.data.message || 'Your account has been blocked by an administrator.');
+        setShowBlockedModal(true);
+        return;
+      }
+
+      if (isLogin && res.data.message && res.data.message.includes("successful")) {
         const user = { email: form.email, name: form.name, role: res.data.role || 'user' };
         localStorage.setItem("campustrack_user", JSON.stringify(user)); // ✅ Save session
         onLogin(user);
@@ -63,6 +73,11 @@ export default function LoginSignup({ onLogin }) {
     } catch (err) {
       setMsg("❌ Something went wrong. Try again!");
     }
+  };
+
+  const closeBlockedModal = () => {
+    setShowBlockedModal(false);
+    setBlockedReason('');
   };
 
   return (
@@ -234,8 +249,22 @@ export default function LoginSignup({ onLogin }) {
           </p>
 
           {msg && <p className="text-center mt-3">{msg}</p>}
-        </form>
-      </div>
-    </div>
-  );
-}
+                </form>
+              </div>
+      {/* Blocked modal */}
+      {showBlockedModal && (
+        <div className="modal-center" role="dialog" aria-modal="true">
+          <div className="modal-backdrop" onClick={closeBlockedModal}></div>
+          <div className="modal-card">
+            <h4 className="text-lg font-semibold mb-2">Account Blocked</h4>
+            <div className="modal-body text-sm text-gray-700 mb-4">Your account has been blocked by an administrator.</div>
+            <div className="modal-body text-sm text-gray-800 mb-4"><strong>Reason:</strong> {blockedReason || '-'}</div>
+            <div className="modal-actions">
+              <button onClick={closeBlockedModal} className="px-3 py-1 rounded bg-blue-600 text-white">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+            </div>
+          );
+        }

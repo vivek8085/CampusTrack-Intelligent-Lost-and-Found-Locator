@@ -102,11 +102,8 @@ export default function LostItemForm({ onSuccess }) {
           <label htmlFor="brand">Brand</label>
         </div>
 
-        <button type="button" onClick={() => setShowAdvanced((s) => !s)} className="text-sm small-muted">
-          {showAdvanced ? "Hide optional fields" : "Show optional fields"}
-        </button>
 
-        {showAdvanced && (
+        {(
           <>
             <div className="form-field">
               <input id="modelNo" name="modelNo" value={formData.modelNo} onChange={handleChange} placeholder=" " />

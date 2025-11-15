@@ -14,6 +14,11 @@ public class UserService {
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     public String register(User user) {
+        // normalize email to lower-case
+        String email = user.getEmail() == null ? null : user.getEmail().trim().toLowerCase();
+        if (email == null || email.isBlank()) throw new IllegalArgumentException("Email required");
+        if (repo.findByEmail(email) != null) throw new IllegalStateException("Email already in use");
+        user.setEmail(email);
         user.setPassword(encoder.encode(user.getPassword()));
         repo.save(user);
         return "User registered successfully!";

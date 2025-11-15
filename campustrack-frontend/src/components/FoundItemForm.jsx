@@ -89,11 +89,7 @@ export default function FoundItemForm({ user, onSuccess }) {
           <label htmlFor="fi_brand">Brand</label>
         </div>
 
-        <button type="button" onClick={() => setShowAdvanced((s) => !s)} className="text-sm small-muted">
-          {showAdvanced ? "Hide optional fields" : "Show optional fields"}
-        </button>
-
-        {showAdvanced && (
+        {(
           <>
             <div className="form-field">
               <input id="fi_modelNo" name="modelNo" value={formData.modelNo} onChange={handleChange} placeholder=" " />

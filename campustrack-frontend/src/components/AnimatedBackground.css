@@ -1,0 +1,34 @@
+.animated-bg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.animated-bg-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  will-change: transform;
+  transition: transform 220ms linear;
+}
+
+/* subtle overlay to tone down contrast and add soft blend */
+.animated-bg::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-bg { display: none; }
+}
