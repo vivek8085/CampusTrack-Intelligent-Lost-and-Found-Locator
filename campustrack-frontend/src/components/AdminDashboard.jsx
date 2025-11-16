@@ -275,8 +275,8 @@ export default function AdminDashboard() {
   }, [adminView]);
 
   return (
-    <div className="relative min-h-screen admin-container">
-      <AnimatedBackground />
+    <div className={`relative min-h-screen admin-container ${adminView === 'dashboard' ? 'admin-transparent' : ''}`}>
+      {adminView === 'dashboard' && <AnimatedBackground />}
       <div className="relative z-10">
       {/* top navbar inside admin dashboard */}
       <nav className="glass-nav nav-dark text-white px-6 py-3 flex justify-between items-center">
@@ -304,7 +304,7 @@ export default function AdminDashboard() {
 
       <div className="p-4 bg-white rounded shadow mt-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-semibold">Admin Dashboard</h2>
+          <h2 className="text-xl font-semibold">Dashboard</h2>
           {/* collapse toggle - visible on mobile and desktop */}
           <div className="flex items-center gap-2">
             <button onClick={() => setShowPanel(s => !s)} className="px-3 py-1 bg-gray-100 text-sm rounded md:hidden">{showPanel ? 'Hide' : 'Show'} Panel</button>
@@ -334,23 +334,23 @@ export default function AdminDashboard() {
       {/* Real-time dashboard panel with cards */}
       {showPanel && (
         <div className="mb-4 grid grid-cols-5 gap-3">
-          <div className="p-3 bg-white border rounded text-center anim-card">
+          <div className="p-3 bg-white text-center anim-card">
             <div className="text-sm text-gray-600">Reported Lost</div>
             <div className="text-2xl font-bold">{stats?.lostCount ?? 0}</div>
           </div>
-          <div className="p-3 bg-white border rounded text-center anim-card">
+          <div className="p-3 bg-white text-center anim-card">
             <div className="text-sm text-gray-600">Found Items</div>
             <div className="text-2xl font-bold">{stats?.foundCount ?? 0}</div>
           </div>
-          <div className="p-3 bg-white border rounded text-center anim-card">
+          <div className="p-3 bg-white text-center anim-card">
             <div className="text-sm text-gray-600">Users</div>
             <div className="text-2xl font-bold">{stats?.totalUsers ?? 0}</div>
           </div>
-          <div className="p-3 bg-white border rounded text-center anim-card">
+          <div className="p-3 bg-white text-center anim-card">
             <div className="text-sm text-gray-600">Matched</div>
             <div className="text-2xl font-bold">{stats?.matchedCount ?? 0}</div>
           </div>
-          <div className="p-3 bg-white border rounded text-center anim-card">
+          <div className="p-3 bg-white text-center anim-card">
             <div className="text-sm text-gray-600">Recovered</div>
             <div className="text-2xl font-bold">{stats?.recoveredCount ?? 0}</div>
           </div>
@@ -382,7 +382,7 @@ export default function AdminDashboard() {
                       <td>{u.adminId || '-'}</td>
                       <td>
                         <div className="table-actions">
-                          <button className="table-btn ghost" onClick={() => viewUser(u)}>View</button>
+                          <button className="table-btn view" onClick={() => viewUser(u)}>View</button>
                           <button className="table-btn danger" onClick={() => deleteUser(u.id)}>Delete</button>
                         </div>
                       </td>
@@ -483,7 +483,7 @@ export default function AdminDashboard() {
                       <td>{u.adminId || '-'}</td>
                       <td>
                         <div className="table-actions">
-                          <button className="table-btn ghost" onClick={() => viewUser(u)}>View</button>
+                          <button className="table-btn view" onClick={() => viewUser(u)}>View</button>
                           <button className="table-btn danger" onClick={() => deleteUser(u.id)}>Delete</button>
                         </div>
                       </td>
@@ -518,7 +518,7 @@ export default function AdminDashboard() {
                       <td>{l.lostAt || l.createdAt || '-'}</td>
                       <td>
                         <div className="table-actions">
-                          <button className="table-btn ghost" onClick={() => viewLostItem(l)}>View</button>
+                          <button className="table-btn view" onClick={() => viewLostItem(l)}>View</button>
                           <button className="table-btn danger" onClick={() => deleteLostItem(l)}>Delete</button>
                         </div>
                       </td>
@@ -553,7 +553,7 @@ export default function AdminDashboard() {
                       <td>{f.foundAt || f.createdAt || '-'}</td>
                       <td>
                         <div className="table-actions">
-                          <button className="table-btn ghost" onClick={() => viewFoundItem(f)}>View</button>
+                          <button className="table-btn view" onClick={() => viewFoundItem(f)}>View</button>
                           <button className="table-btn danger" onClick={() => deleteFoundItem(f)}>Delete</button>
                         </div>
                       </td>
@@ -588,7 +588,7 @@ export default function AdminDashboard() {
                       <td className="whitespace-nowrap">{r.createdAt || r.createdAtString || '-'}</td>
                       <td>
                         <div className="table-actions">
-                          <button className="table-btn ghost" onClick={() => openBlockModal(r)}>View</button>
+                          <button className="table-btn view" onClick={() => openBlockModal(r)}>View</button>
                           <button className="table-btn danger" onClick={() => unblock(r.id)}>Unblock</button>
                         </div>
                       </td>
@@ -641,7 +641,7 @@ export default function AdminDashboard() {
                       <td>{m.createdAt || m.confirmedAt || '-'}</td>
                       <td>
                         <div className="table-actions">
-                          <button className="table-btn ghost" onClick={() => viewMatch(m)}>View</button>
+                          <button className="table-btn view" onClick={() => viewMatch(m)}>View</button>
                           <button className="table-btn danger" onClick={() => removeMatch(m)}>Remove</button>
                         </div>
                       </td>

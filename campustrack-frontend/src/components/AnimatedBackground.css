@@ -32,3 +32,6 @@
 @media (prefers-reduced-motion: reduce) {
   .animated-bg { display: none; }
 }
+
+/* helper: clear the admin container background when dashboard requests transparency */
+.admin-container.admin-transparent { background: transparent; }
