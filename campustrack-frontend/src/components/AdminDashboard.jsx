@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AnimatedBackground from './AnimatedBackground';
 import './AdminDashboard.css';
+import adminBg from '../assets/admin-bg.gif';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -160,7 +161,20 @@ export default function AdminDashboard() {
   };
 
   const restoreBackup = async (b) => {
-    alert('Restore not implemented in frontend — requires backend endpoint');
+    if (!b || !window.confirm('Restore this backup record?')) return;
+    const id = b.id;
+    const host = `${location.protocol}//${location.hostname}:8080`;
+    try {
+      const r = await fetch(`${host}/api/admin/backups/${id}/restore`, { method: 'POST', credentials: 'include' });
+      if (r.ok) {
+        alert('Backup restored successfully');
+        await loadStats();
+      } else {
+        alert('Failed to restore backup');
+      }
+    } catch (e) {
+      alert('Error restoring backup');
+    }
   };
 
   const deleteBackup = async (b) => {
@@ -275,7 +289,9 @@ export default function AdminDashboard() {
   }, [adminView]);
 
   return (
-    <div className={`relative min-h-screen admin-container ${adminView === 'dashboard' ? 'admin-transparent' : ''}`}>
+    <div className={`relative min-h-screen admin-container admin-gif ${adminView === 'dashboard' ? 'admin-transparent' : ''}`}>
+      {/* Admin GIF background (imported from src/assets) */}
+      <img src={adminBg} alt="" className="admin-gif-bg" aria-hidden />
       {adminView === 'dashboard' && <AnimatedBackground />}
       <div className="relative z-10">
       {/* top navbar inside admin dashboard */}
