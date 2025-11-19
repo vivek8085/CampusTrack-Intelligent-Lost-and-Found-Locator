@@ -44,7 +44,15 @@ export default function FoundItemForm({ user, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
+
+    // Ensure multipart parts exist for optional fields so backend multipart parsers
+    // that expect the part won't fail. Append empty string when not provided.
+    data.append('modelNo', formData.modelNo || '');
+    data.append('size', formData.size || '');
+
     Object.keys(formData).forEach((key) => {
+      // skip modelNo/size because we've already appended them explicitly
+      if (key === 'modelNo' || key === 'size') return;
       const val = formData[key];
       if (val === null || val === undefined) return;
       if (typeof val === 'string' && val.trim() === '') return;
@@ -94,11 +102,13 @@ export default function FoundItemForm({ user, onSuccess }) {
             <div className="form-field">
               <input id="fi_modelNo" name="modelNo" value={formData.modelNo} onChange={handleChange} placeholder=" " />
               <label htmlFor="fi_modelNo">Model No</label>
+              <div className="small-muted">Optional</div>
             </div>
 
             <div className="form-field">
               <input id="fi_size" name="size" value={formData.size} onChange={handleChange} placeholder=" " />
               <label htmlFor="fi_size">Size</label>
+              <div className="small-muted">Optional</div>
             </div>
           </>
         )}
@@ -121,7 +131,7 @@ export default function FoundItemForm({ user, onSuccess }) {
 
         <div className="form-field">
           <input id="fi_reporterEmail" name="reporterEmail" type="email" value={formData.reporterEmail} onChange={handleChange} placeholder=" " />
-          <label htmlFor="fi_reporterEmail">Your email (optional)</label>
+          <label htmlFor="fi_reporterEmail">Your university mail</label>
         </div>
 
         <div className="form-field">

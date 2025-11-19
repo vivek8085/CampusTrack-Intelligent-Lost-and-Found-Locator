@@ -66,8 +66,12 @@ const ViewFoundItems = () => {
               </h2>
 
               <p className="text-gray-700"><strong>Brand:</strong> {item.brand}</p>
-              <p className="text-gray-700"><strong>Model No:</strong> {item.modelNo}</p>
-              <p className="text-gray-700"><strong>Size:</strong> {item.size}</p>
+              {item.modelNo && item.modelNo.toString().trim() !== '' ? (
+                <p className="text-gray-700"><strong>Model No:</strong> {item.modelNo}</p>
+              ) : null}
+              {item.size && item.size.toString().trim() !== '' ? (
+                <p className="text-gray-700"><strong>Size:</strong> {item.size}</p>
+              ) : null}
               <p className="text-gray-700"><strong>Location:</strong> {item.location}</p>
               <p className="text-gray-700"><strong>About:</strong> {item.about}</p>
 

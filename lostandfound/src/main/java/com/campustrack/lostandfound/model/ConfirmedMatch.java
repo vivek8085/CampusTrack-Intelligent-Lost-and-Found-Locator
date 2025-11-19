@@ -13,5 +13,7 @@ public class ConfirmedMatch {
 
     private Long foundItemId;
     private Long lostItemId;
+    // Email of the user who confirmed this match
+    private String confirmerEmail;
     private LocalDateTime confirmedAt = LocalDateTime.now();
 }

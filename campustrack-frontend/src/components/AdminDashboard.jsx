@@ -23,6 +23,9 @@ export default function AdminDashboard() {
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [blockReason, setBlockReason] = useState('');
+  // Manage users filters
+  const [userFilterEmail, setUserFilterEmail] = useState('');
+  const [userFilterRole, setUserFilterRole] = useState('');
 
   const loadStats = async () => {
     try {
@@ -36,6 +39,26 @@ export default function AdminDashboard() {
       const res = await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/users`, { credentials: 'include' });
       if (res.ok) setUsers(await res.json());
     } catch (e) {}
+  };
+
+  // Helper: format date-like fields from item objects
+  const fmtDate = (item, keys) => {
+    if (!item) return '-';
+    for (const k of keys) {
+      const v = item[k];
+      if (v === undefined || v === null) continue;
+      const s = String(v).trim();
+      if (!s) continue;
+      // try parse as date
+      try {
+        const d = new Date(s);
+        if (!isNaN(d.getTime())) return d.toLocaleString();
+      } catch (e) {
+        // fallthrough
+      }
+      return s;
+    }
+    return '-';
   };
 
   useEffect(() => { loadStats(); loadUsers(); }, []);
@@ -91,6 +114,16 @@ export default function AdminDashboard() {
     setSelectedItem(null);
     setSelectedItemType(null);
   };
+
+  const clearUserFilters = () => { setUserFilterEmail(''); setUserFilterRole(''); };
+
+  const filteredUsers = users.filter(u => {
+    const email = (u?.email || u?.reporterEmail || '').toString().toLowerCase();
+    const role = (u?.role || '').toString().toLowerCase();
+    const emailMatch = !userFilterEmail || email.includes(userFilterEmail.trim().toLowerCase());
+    const roleMatch = !userFilterRole || role === userFilterRole.trim().toLowerCase();
+    return emailMatch && roleMatch;
+  });
 
   // Try multiple likely endpoints to delete an item safely
   async function tryDeleteCandidates(candidates) {
@@ -160,22 +193,6 @@ export default function AdminDashboard() {
     } catch (e) { alert('Error removing match'); }
   };
 
-  const restoreBackup = async (b) => {
-    if (!b || !window.confirm('Restore this backup record?')) return;
-    const id = b.id;
-    const host = `${location.protocol}//${location.hostname}:8080`;
-    try {
-      const r = await fetch(`${host}/api/admin/backups/${id}/restore`, { method: 'POST', credentials: 'include' });
-      if (r.ok) {
-        alert('Backup restored successfully');
-        await loadStats();
-      } else {
-        alert('Failed to restore backup');
-      }
-    } catch (e) {
-      alert('Error restoring backup');
-    }
-  };
 
   const deleteBackup = async (b) => {
     if (!b || !window.confirm('Delete this backup record?')) return;
@@ -296,7 +313,10 @@ export default function AdminDashboard() {
       <div className="relative z-10">
       {/* top navbar inside admin dashboard */}
       <nav className="glass-nav nav-dark text-white px-6 py-3 flex justify-between items-center">
-        <h1 className="text-2xl font-semibold tracking-tight">CampusTrack</h1>
+          <h1 className="text-2xl font-semibold tracking-tight brand">
+            <span className="brand-slide" aria-hidden>CampusTrack</span>
+            <span className="sr-only">CampusTrack</span>
+          </h1>
         <div className="flex gap-3 items-center">
           {/* Admin-specific sections */}
           <button onClick={() => setAdminView('manage-users')} className={`nav-btn transition px-3 py-1 rounded-md text-sm ${adminView==='manage-users' ? 'nav-active' : 'nav-inactive'}`}>Manage Users</button>
@@ -349,7 +369,7 @@ export default function AdminDashboard() {
 
       {/* Real-time dashboard panel with cards */}
       {showPanel && (
-        <div className="mb-4 grid grid-cols-5 gap-3">
+        <div className="mb-4 grid grid-cols-5 gap-3 stats-grid">
           <div className="p-3 bg-white text-center anim-card">
             <div className="text-sm text-gray-600">Reported Lost</div>
             <div className="text-2xl font-bold">{stats?.lostCount ?? 0}</div>
@@ -390,7 +410,7 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map(u => (
+                  {filteredUsers.map(u => (
                     <tr key={u.id} className="border-t">
                       <td>{u.name}</td>
                       <td>{u.email}</td>
@@ -417,7 +437,6 @@ export default function AdminDashboard() {
             <div className="modal-card max-w-2xl">
               <div className="flex justify-between items-start">
                 <h4 className="text-lg font-semibold mb-2">{selectedItemType === 'user' ? 'User' : selectedItemType === 'lost' ? 'Lost Item' : selectedItemType === 'found' ? 'Found Item' : selectedItemType === 'match' ? 'Match' : selectedItemType === 'backup' ? 'Backup' : 'Details'}</h4>
-                <button onClick={closeItemModal} className="text-sm px-2 py-1">Close</button>
               </div>
               <div className="modal-body text-sm text-gray-700 mb-3">
                 {selectedItemType === 'user' && (
@@ -450,13 +469,13 @@ export default function AdminDashboard() {
                   <div>
                     <div><strong>Lost:</strong> {selectedItem.lostTitle || selectedItem.lostItemId}</div>
                     <div><strong>Found:</strong> {selectedItem.foundTitle || selectedItem.foundItemId}</div>
-                    <div><strong>Confirmed At:</strong> {selectedItem.createdAt || selectedItem.confirmedAt}</div>
+                    <div><strong>Confirmed At:</strong> {fmtDate(selectedItem, ['createdAt','confirmedAt','confirmedAtString'])}</div>
                     <div className="mt-2"><pre className="text-xs overflow-auto">{JSON.stringify(selectedItem, null, 2)}</pre></div>
                   </div>
                 )}
                 {selectedItemType === 'backup' && (
                   <div>
-                    <div><strong>Archived At:</strong> {selectedItem.createdAt || selectedItem.archivedAt}</div>
+                    <div><strong>Archived At:</strong> {fmtDate(selectedItem, ['createdAt','archivedAt','archivedAtString'])}</div>
                     <div className="grid grid-cols-2 gap-2">
                       <div><strong>Lost Snapshot</strong><pre className="text-xs max-h-56 overflow-auto">{selectedItem.lostItemSnapshot}</pre></div>
                       <div><strong>Found Snapshot</strong><pre className="text-xs max-h-56 overflow-auto">{selectedItem.foundItemSnapshot}</pre></div>
@@ -468,8 +487,7 @@ export default function AdminDashboard() {
                 {selectedItemType === 'lost' && <button onClick={() => { deleteLostItem(selectedItem); closeItemModal(); }} className="px-3 py-1 rounded bg-red-600 text-white">Delete Lost</button>}
                 {selectedItemType === 'found' && <button onClick={() => { deleteFoundItem(selectedItem); closeItemModal(); }} className="px-3 py-1 rounded bg-red-600 text-white">Delete Found</button>}
                 {selectedItemType === 'match' && <button onClick={() => { removeMatch(selectedItem); closeItemModal(); }} className="px-3 py-1 rounded bg-red-600 text-white">Remove Match</button>}
-                {selectedItemType === 'backup' && <><button onClick={() => { restoreBackup(selectedItem); closeItemModal(); }} className="px-3 py-1 rounded bg-green-600 text-white">Restore</button>
-                <button onClick={() => { deleteBackup(selectedItem); closeItemModal(); }} className="px-3 py-1 rounded bg-red-600 text-white">Delete Backup</button></>}
+                {selectedItemType === 'backup' && <><button onClick={() => { deleteBackup(selectedItem); closeItemModal(); }} className="px-3 py-1 rounded bg-red-600 text-white">Delete Backup</button></>}
                 <button onClick={closeItemModal} className="px-3 py-1 rounded border">Close</button>
               </div>
             </div>
@@ -479,6 +497,16 @@ export default function AdminDashboard() {
         {adminView === 'manage-users' && (
           <div>
             <h3 className="text-lg font-medium mb-2">Manage Users</h3>
+            <div className="flex gap-2 items-center mb-3">
+              <input value={userFilterEmail} onChange={(e) => setUserFilterEmail(e.target.value)} placeholder="Filter by email" className="border rounded p-2 text-sm w-60" />
+              <select value={userFilterRole} onChange={(e) => setUserFilterRole(e.target.value)} className="border rounded p-2 text-sm">
+                <option value="">All roles</option>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+              <button onClick={clearUserFilters} className="px-3 py-1 border rounded text-sm">Clear</button>
+              <div className="text-sm text-gray-600 ml-auto">Showing {filteredUsers.length} of {users.length}</div>
+            </div>
             <div className="overflow-auto max-h-80">
               <table className="admin-table w-full text-sm">
                 <thead>
@@ -491,7 +519,7 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map(u => (
+                  {filteredUsers.map(u => (
                     <tr key={u.id} className="border-t">
                       <td>{u.name}</td>
                       <td>{u.email}</td>
@@ -531,7 +559,7 @@ export default function AdminDashboard() {
                       <td>{l.title || l.name || l.itemName}</td>
                       <td>{l.reporterEmail || l.reporter || '-'}</td>
                       <td>{l.lostLocation || l.location || '-'}</td>
-                      <td>{l.lostAt || l.createdAt || '-'}</td>
+                      <td>{fmtDate(l, ['lostDateTime','lostAt','createdAt','createdAtString','lostDateTimeString'])}</td>
                       <td>
                         <div className="table-actions">
                           <button className="table-btn view" onClick={() => viewLostItem(l)}>View</button>
@@ -566,7 +594,7 @@ export default function AdminDashboard() {
                       <td>{f.title || f.name || f.itemName}</td>
                       <td>{f.reporterEmail || f.reporter || '-'}</td>
                       <td>{f.foundLocation || f.location || '-'}</td>
-                      <td>{f.foundAt || f.createdAt || '-'}</td>
+                      <td>{fmtDate(f, ['foundDateTime','foundAt','createdAt','createdAtString','foundDateTimeString'])}</td>
                       <td>
                         <div className="table-actions">
                           <button className="table-btn view" onClick={() => viewFoundItem(f)}>View</button>
@@ -601,7 +629,7 @@ export default function AdminDashboard() {
                       <td className="whitespace-nowrap">{r.blockerEmail || r.blocker || '-'}</td>
                       <td className="whitespace-nowrap">{r.blockedEmail || r.blocked || '-'}</td>
                       <td className="max-w-xs text-sm text-gray-700"><div className="truncate">{r.reason || '-'}</div></td>
-                      <td className="whitespace-nowrap">{r.createdAt || r.createdAtString || '-'}</td>
+                      <td className="whitespace-nowrap">{fmtDate(r, ['createdAt','createdAtString'])}</td>
                       <td>
                         <div className="table-actions">
                           <button className="table-btn view" onClick={() => openBlockModal(r)}>View</button>
@@ -654,7 +682,7 @@ export default function AdminDashboard() {
                     <tr key={m.id || `${m.lostItemId}-${m.foundItemId}`} className="border-t">
                       <td>{m.lostItemId || m.lostTitle || '-'}</td>
                       <td>{m.foundItemId || m.foundTitle || '-'}</td>
-                      <td>{m.createdAt || m.confirmedAt || '-'}</td>
+                      <td>{fmtDate(m, ['createdAt','confirmedAt','confirmedAtString'])}</td>
                       <td>
                         <div className="table-actions">
                           <button className="table-btn view" onClick={() => viewMatch(m)}>View</button>
@@ -690,10 +718,9 @@ export default function AdminDashboard() {
                       <tr key={r.id} className="border-t">
                         <td><pre className="text-xs max-h-28 overflow-auto">{r.lostItemSnapshot}</pre></td>
                         <td><pre className="text-xs max-h-28 overflow-auto">{r.foundItemSnapshot}</pre></td>
-                        <td>{r.createdAt || r.archivedAt || '-'}</td>
+                        <td>{fmtDate(r, ['createdAt','archivedAt','archivedAtString'])}</td>
                         <td>
                           <div className="table-actions">
-                            <button className="table-btn ghost" onClick={() => restoreBackup(r)}>Restore</button>
                             <button className="table-btn danger" onClick={() => deleteBackup(r)}>Delete</button>
                           </div>
                         </td>

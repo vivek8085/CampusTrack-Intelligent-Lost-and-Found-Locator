@@ -68,12 +68,16 @@ const ViewLostItems = () => {
               <p className="text-sm text-gray-600">
                 <strong>Brand:</strong> {item.brand}
               </p>
-              <p className="text-sm text-gray-600">
-                <strong>Model No:</strong> {item.modelNo}
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong>Size:</strong> {item.size}
-              </p>
+              {item.modelNo && item.modelNo.toString().trim() !== '' ? (
+                <p className="text-sm text-gray-600">
+                  <strong>Model No:</strong> {item.modelNo}
+                </p>
+              ) : null}
+              {item.size && item.size.toString().trim() !== '' ? (
+                <p className="text-sm text-gray-600">
+                  <strong>Size:</strong> {item.size}
+                </p>
+              ) : null}
               <p className="text-sm text-gray-600">
                 <strong>Location:</strong> {item.location}
               </p>

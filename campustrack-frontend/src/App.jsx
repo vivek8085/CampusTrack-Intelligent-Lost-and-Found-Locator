@@ -107,7 +107,15 @@ export default function App() {
 
       {/* 🔹 Navbar */}
       <nav className="glass-nav nav-dark text-white px-6 py-3 flex justify-between items-center">
-        <h1 className="text-2xl font-semibold tracking-tight brand-animated">CampusTrack</h1>
+        <div className="flex items-center">
+          <h1 className="text-2xl font-semibold tracking-tight brand-animated">CampusTrack</h1>
+          {/* Greeting shown to all logged-in users */}
+          <div className="ml-4">
+            <span className="greeting" aria-live="polite">
+              Hi, {user?.firstName || user?.name || (user?.email ? user.email.split('@')[0] : 'there')} <span className="wave" aria-hidden="true">👋</span>
+            </span>
+          </div>
+        </div>
   <div className="flex gap-3 items-center flex-wrap">
           {user?.role === 'admin' && (
             <button

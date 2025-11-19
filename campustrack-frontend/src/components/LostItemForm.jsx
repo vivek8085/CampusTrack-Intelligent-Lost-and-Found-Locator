@@ -47,7 +47,14 @@ export default function LostItemForm({ onSuccess }) {
     e.preventDefault();
     const data = new FormData();
 
+    // Ensure multipart parts exist for optional fields so backend multipart parsers
+    // that expect the part won't fail. Append empty string when not provided.
+    data.append('modelNo', formData.modelNo || '');
+    data.append('size', formData.size || '');
+
     Object.keys(formData).forEach((k) => {
+      // skip modelNo/size because we've already appended them explicitly
+      if (k === 'modelNo' || k === 'size') return;
       const v = formData[k];
       if (v === null || v === undefined) return;
       if (typeof v === "string" && v.trim() === "") return;
@@ -108,11 +115,13 @@ export default function LostItemForm({ onSuccess }) {
             <div className="form-field">
               <input id="modelNo" name="modelNo" value={formData.modelNo} onChange={handleChange} placeholder=" " />
               <label htmlFor="modelNo">Model No</label>
+              <div className="small-muted">Optional</div>
             </div>
 
             <div className="form-field">
               <input id="size" name="size" value={formData.size} onChange={handleChange} placeholder=" " />
               <label htmlFor="size">Size / Dimensions</label>
+              <div className="small-muted">Optional</div>
             </div>
           </>
         )}
@@ -135,7 +144,7 @@ export default function LostItemForm({ onSuccess }) {
 
         <div className="form-field">
           <input id="reporterEmail" name="reporterEmail" type="email" value={formData.reporterEmail} onChange={handleChange} placeholder=" " />
-          <label htmlFor="reporterEmail">Your email (optional)</label>
+          <label htmlFor="reporterEmail">Your university mail</label>
         </div>
 
         <div className="form-field">

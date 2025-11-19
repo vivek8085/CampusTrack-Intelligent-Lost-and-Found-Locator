@@ -37,8 +37,8 @@ public class LostItemController {
     public ResponseEntity<?> reportLostItem(
             @RequestPart("itemName") String itemName,
             @RequestPart("brand") String brand,
-            @RequestPart("modelNo") String modelNo,
-            @RequestPart("size") String size,
+            @RequestPart(value = "modelNo", required = false) String modelNo,
+            @RequestPart(value = "size", required = false) String size,
             @RequestPart("location") String location,
             @RequestPart("about") String about,
         @RequestPart("lostDateTime") String lostDateTime,

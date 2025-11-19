@@ -20,20 +20,27 @@ public class MatchConfirmationController {
     private com.campustrack.lostandfound.service.NotificationService notificationService;
 
     @PostMapping
-    public ResponseEntity<?> confirmMatch(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> confirmMatch(@RequestBody Map<String, Object> body, jakarta.servlet.http.HttpSession session) {
         try {
             Long foundItemId = ((Number) body.get("foundItemId")).longValue();
             Long lostItemId = ((Number) body.get("lostItemId")).longValue();
 
-            var existing = confirmedMatchRepository.findByFoundItemIdAndLostItemId(foundItemId, lostItemId);
+            // require logged-in user to enforce one-confirmation-per-user
+            String confirmerEmail = (String) session.getAttribute("userEmail");
+            if (confirmerEmail == null || confirmerEmail.isBlank()) {
+                return ResponseEntity.status(401).body(Map.of("message", "Login required to confirm match"));
+            }
+
+            var existing = confirmedMatchRepository.findByFoundItemIdAndLostItemIdAndConfirmerEmail(foundItemId, lostItemId, confirmerEmail);
             if (existing.isPresent()) {
-                return ResponseEntity.ok(Map.of("message", "Already confirmed", "id", existing.get().getId()));
+                return ResponseEntity.ok(Map.of("message", "Already confirmed by this user", "id", existing.get().getId()));
             }
 
             ConfirmedMatch cm = new ConfirmedMatch();
             cm.setFoundItemId(foundItemId);
             cm.setLostItemId(lostItemId);
             cm.setConfirmedAt(java.time.LocalDateTime.now());
+            cm.setConfirmerEmail(confirmerEmail);
 
             ConfirmedMatch saved = confirmedMatchRepository.save(cm);
             // create notification for the lost item reporter

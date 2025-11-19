@@ -56,6 +56,7 @@ export default function LoginSignup({ onLogin }) {
           : { name: form.name, email: form.email, password: form.password, role: isAdminMode ? 'admin' : 'user', adminId: isAdminMode ? adminId : undefined };
 
   const res = await axios.post(url, payload, { withCredentials: true });
+
       setMsg(res.data.message);
 
       if (isLogin && (res.data.blocked === true || res.data.blocked === 'true' || (res.data.message && res.data.message.toLowerCase().includes('blocked')))) {
@@ -65,12 +66,25 @@ export default function LoginSignup({ onLogin }) {
         return;
       }
 
-      if (isLogin && res.data.message && res.data.message.includes("successful")) {
-        const user = { email: form.email, name: form.name, role: res.data.role || 'user' };
-        localStorage.setItem("campustrack_user", JSON.stringify(user)); // ✅ Save session
-        onLogin(user);
+      // Success handling: show alert for login/signup when server reports success
+      if (res.data && res.data.message && res.data.message.toLowerCase().includes("successful")) {
+        if (isLogin) {
+          const user = { email: form.email, name: form.name, role: res.data.role || 'user' };
+          localStorage.setItem("campustrack_user", JSON.stringify(user)); // ✅ Save session
+          onLogin(user);
+          // Friendly browser alert on successful login
+          try { alert(`Login successful. Welcome ${user.name || user.email.split('@')[0]}!`); } catch (e) { /* ignore in non-browser env */ }
+        } else {
+          // Signup success: inform user to login
+          try { alert(`Sign up successful. You can now log in with ${form.email}.`); } catch (e) { /* ignore */ }
+          // Optionally switch to login view so user can sign in
+          setIsLogin(true);
+        }
       }
     } catch (err) {
+      // Show a clearer alert on error when possible
+      const serverMsg = err?.response?.data?.message || err?.message;
+      try { alert(`Authentication error: ${serverMsg || 'Something went wrong. Try again.'}`); } catch (e) {}
       setMsg("❌ Something went wrong. Try again!");
     }
   };
