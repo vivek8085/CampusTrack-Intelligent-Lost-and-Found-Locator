@@ -150,8 +150,3 @@ This is a lightweight helper service/experiment environment for model-based matc
 MIT — feel free to use, modify and distribute.
 
 ---
-
-If you want, I can also:
-- run the frontend dev server and report visual checks (I can provide exact commands), or
-- open `AdminDashboard.jsx` and make further adjustments to the brand entrance (from below vs above) or swap the SVG logo for another icon.
-- **Object recognition** using TensorFlow or OpenCV  
