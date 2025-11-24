@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface MatchSuggestionRepository extends JpaRepository<MatchSuggestion, Long> {
     List<MatchSuggestion> findByFoundItemIdOrderByScoreDesc(Long foundItemId);
+    List<MatchSuggestion> findByLostItemIdIn(List<Long> lostItemIds);
 }

@@ -26,6 +26,10 @@ export default function AdminDashboard() {
   // Manage users filters
   const [userFilterEmail, setUserFilterEmail] = useState('');
   const [userFilterRole, setUserFilterRole] = useState('');
+  const [showNoticeModal, setShowNoticeModal] = useState(false);
+  const [noticeTitle, setNoticeTitle] = useState('');
+  const [noticeContent, setNoticeContent] = useState('');
+  const [notices, setNotices] = useState([]);
 
   const loadStats = async () => {
     try {
@@ -62,6 +66,134 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => { loadStats(); loadUsers(); }, []);
+
+  // fetch notices on mount
+  useEffect(() => { fetchNotices(); }, []);
+
+  const fetchNotices = async () => {
+    try {
+      const host = `${location.protocol}//${location.hostname}:8080`;
+      const r = await fetch(`${host}/api/notices`, { credentials: 'include' });
+      if (r.ok) setNotices(await r.json());
+      else setNotices([]);
+    } catch (e) { setNotices([]); }
+  };
+
+  const openNoticePopup = () => {
+    const w = 680, h = 560;
+    const left = Math.max(0, (window.screen.width - w) / 2);
+    const top = Math.max(0, (window.screen.height - h) / 2);
+    const popup = window.open('', 'MakeNotice', `width=${w},height=${h},left=${left},top=${top},resizable=yes`);
+    if (!popup) { alert('Popup blocked. Please allow popups for this site.'); return; }
+    const host = `${location.protocol}//${location.hostname}:8080`;
+    const escape = (s) => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const html = `
+      <!doctype html>
+      <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Make Notice</title>
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <style>
+          body{ font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial; padding:16px; color:#0f172a; }
+          .field{ width:100%; box-sizing:border-box; padding:8px; margin-bottom:8px; border:1px solid #d1d5db; border-radius:6px }
+          .btn{ padding:8px 12px; border-radius:6px; cursor:pointer; border:0; }
+          .btn.red{ background:#ef4444; color:#fff }
+          .btn.gray{ background:#f3f4f6; color:#111 }
+          table{ width:100%; border-collapse:collapse; margin-top:12px }
+          th,td{ padding:8px; border-bottom:1px solid #e6e6e6; text-align:left }
+          .small{ font-size:12px; color:#6b7280 }
+        </style>
+      </head>
+      <body>
+        <h2>Announcements</h2>
+        <input id="title" class="field" placeholder="Title" />
+        <textarea id="content" class="field" rows="4" placeholder="Message"></textarea>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <button id="publish" class="btn red">Publish</button>
+          <button id="clear" class="btn gray">Clear</button>
+          <button id="close" class="btn gray" style="margin-left:auto">Close</button>
+        </div>
+        <div id="status" class="small"></div>
+        <div id="list"></div>
+        <script>
+          const host = ${JSON.stringify(host)};
+          const status = document.getElementById('status');
+          function setStatus(t){ status.textContent = t; }
+          async function fetchList(){
+            try{
+              const r = await fetch(host + '/api/notices', { credentials:'include' });
+              if(!r.ok) { setStatus('Failed to load notices'); return []; }
+              const arr = await r.json(); renderList(arr); return arr;
+            }catch(e){ setStatus('Error loading notices'); return []; }
+          }
+          function renderList(arr){
+            const root = document.getElementById('list');
+            if(!arr || arr.length===0){ root.innerHTML = '<div class="small">No notices</div>'; return; }
+            let html = '<table><thead><tr><th>Title</th><th>Message</th><th>Date</th><th></th></tr></thead><tbody>';
+            for(const n of arr){
+              const d = new Date(n.createdAt||n.createdAtString||'');
+              const date = isNaN(d.getTime())? '': d.toLocaleString();
+              html += '<tr><td>' + escape(n.title||'') + '</td><td>' + escape(n.content||'') + '</td><td class="small">' + escape(date) + '</td><td><button data-id="' + n.id + '" class="btn gray remove">Remove</button></td></tr>';
+            }
+            html += '</tbody></table>';
+            root.innerHTML = html;
+            Array.from(document.querySelectorAll('.remove')).forEach(b => b.addEventListener('click', async (e) => {
+              const id = e.currentTarget.getAttribute('data-id');
+              if(!confirm('Delete this announcement?')) return;
+              try{
+                const r = await fetch(host + '/api/admin/notices/' + id, { method:'DELETE', credentials:'include' });
+                if(!r.ok) { alert('Delete failed'); return; }
+                await fetchList();
+                if(window.opener && window.opener.fetchNotices) window.opener.fetchNotices();
+                if(window.opener && window.opener.loadStats) window.opener.loadStats();
+              }catch(e){ alert('Error deleting'); }
+            }));
+          }
+          document.getElementById('publish').addEventListener('click', async () => {
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            if(!title.trim() && !content.trim()){ alert('Enter title or content'); return; }
+            setStatus('Publishing...');
+            try{
+              const r = await fetch(host + '/api/admin/notices', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title, content }) });
+              if(!r.ok){ setStatus('Publish failed'); alert(await r.text().catch(()=>'Error')); setStatus(''); return; }
+              setStatus('Published');
+              document.getElementById('title').value=''; document.getElementById('content').value='';
+              await fetchList();
+              if(window.opener && window.opener.fetchNotices) window.opener.fetchNotices();
+              if(window.opener && window.opener.loadStats) window.opener.loadStats();
+            }catch(e){ setStatus('Error'); alert('Error publishing'); }
+          });
+          document.getElementById('clear').addEventListener('click', ()=>{ document.getElementById('title').value=''; document.getElementById('content').value=''; });
+          document.getElementById('close').addEventListener('click', ()=>{ window.close(); });
+          window.addEventListener('beforeunload', ()=>{ try{ if(window.opener && window.opener.fetchNotices) window.opener.fetchNotices(); if(window.opener && window.opener.loadStats) window.opener.loadStats(); }catch(e){} });
+          fetchList();
+        </script>
+      </body>
+      </html>
+    `;
+    popup.document.open();
+    popup.document.write(html);
+    popup.document.close();
+    popup.focus();
+  };
+
+  const deleteNotice = async (id) => {
+    if (!id || !window.confirm('Delete this announcement?')) return;
+    try {
+      const host = `${location.protocol}//${location.hostname}:8080`;
+      const r = await fetch(`${host}/api/admin/notices/${id}`, { method: 'DELETE', credentials: 'include' });
+      if (!r.ok) {
+        const txt = await r.text().catch(()=>'');
+        alert('Failed to delete notice: ' + txt);
+        return;
+      }
+      await fetchNotices();
+      await loadStats();
+      alert('Notice deleted');
+    } catch (e) { console.error(e); alert('Error deleting notice'); }
+  };
 
   // set mobile flag on mount and on resize
   useEffect(() => {
@@ -242,6 +374,33 @@ export default function AdminDashboard() {
     setBlockReason('');
   };
 
+  const createNotice = async () => {
+    if (!noticeTitle.trim() && !noticeContent.trim()) { alert('Please enter a title or content'); return; }
+    try {
+      const host = `${location.protocol}//${location.hostname}:8080`;
+      const res = await fetch(`${host}/api/admin/notices`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: noticeTitle, content: noticeContent })
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(()=>'');
+        alert('Failed to create notice: ' + txt);
+        return;
+      }
+      // success
+      setNoticeTitle(''); setNoticeContent('');
+      alert('Notice published');
+      // refresh notices list and stats
+      await fetchNotices();
+      await loadStats();
+    } catch (e) {
+      console.error(e);
+      alert('Error creating notice');
+    }
+  };
+
   const submitBlock = async () => {
     if (!selectedBlock) return;
     if (!window.confirm(`Block user ${selectedBlock.blockedEmail || selectedBlock.blocked || ''}?`)) return;
@@ -335,12 +494,17 @@ export default function AdminDashboard() {
             // ensure full reload so app resets
             window.location.reload();
           }} className="px-3 py-1 bg-red-600 text-white rounded btn-hover">Logout</button>
+          
+          {/* Make Notice removed from navbar (moved to dashboard header) */}
         </div>
       </nav>
 
       <div className="p-4 bg-white rounded shadow mt-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-semibold">Dashboard</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold">Dashboard</h2>
+            {adminView === 'dashboard' && (/* notice button removed from header; use Announcements card */ null)}
+          </div>
           {/* collapse toggle - visible on mobile and desktop */}
           <div className="flex items-center gap-2">
             <button onClick={() => setShowPanel(s => !s)} className="px-3 py-1 bg-gray-100 text-sm rounded md:hidden">{showPanel ? 'Hide' : 'Show'} Panel</button>
@@ -378,9 +542,12 @@ export default function AdminDashboard() {
             <div className="text-sm text-gray-600">Found Items</div>
             <div className="text-2xl font-bold">{stats?.foundCount ?? 0}</div>
           </div>
+          {/* Notice card placed between Found and Matched */}
           <div className="p-3 bg-white text-center anim-card">
-            <div className="text-sm text-gray-600">Users</div>
-            <div className="text-2xl font-bold">{stats?.totalUsers ?? 0}</div>
+            <div className="text-sm text-gray-600">Announcements</div>
+              <div className="mt-2">
+              <button onClick={openNoticePopup} className="nav-btn notice-animate">Notice Board</button>
+            </div>
           </div>
           <div className="p-3 bg-white text-center anim-card">
             <div className="text-sm text-gray-600">Matched</div>
@@ -664,6 +831,26 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* Notice modal */}
+        {showNoticeModal && (
+          <div className="modal-center" role="dialog" aria-modal="true">
+            <div className="modal-backdrop" onClick={() => setShowNoticeModal(false)}></div>
+            <div className="modal-card max-w-lg">
+              <h4 className="text-lg font-semibold mb-2">Create Notice</h4>
+              <div className="mb-2">
+                <input value={noticeTitle} onChange={e => setNoticeTitle(e.target.value)} placeholder="Title" className="w-full border rounded p-2" />
+              </div>
+              <div className="mb-2">
+                <textarea value={noticeContent} onChange={e => setNoticeContent(e.target.value)} placeholder="Message" className="w-full border rounded p-2" rows={6} />
+              </div>
+              <div className="modal-actions flex gap-2">
+                <button onClick={() => setShowNoticeModal(false)} className="px-3 py-1 rounded border">Cancel</button>
+                <button onClick={createNotice} className="px-3 py-1 rounded bg-yellow-500 text-white">Publish</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {adminView === 'matched-items' && (
           <div>
             <h3 className="text-lg font-medium mb-2">Matched / Confirmed Items</h3>
@@ -699,10 +886,10 @@ export default function AdminDashboard() {
 
         {adminView === 'recovered-items' && (
           <div>
-            <h3 className="text-lg font-medium mb-2">Recovered (Backup) Items</h3>
+            <h3 className="text-lg font-medium mb-2">Recovered Items</h3>
             <div className="overflow-auto max-h-80">
               {recoveredItems.length === 0 ? (
-                <div className="text-sm text-gray-600">No recovered items endpoint found or no records. If you want backend listing, add a /api/admin/backups endpoint that returns backup records.</div>
+                <div className="text-sm text-gray-600">No recovered items endpoint found or no records.</div>
               ) : (
                 <table className="admin-table w-full text-sm">
                   <thead>

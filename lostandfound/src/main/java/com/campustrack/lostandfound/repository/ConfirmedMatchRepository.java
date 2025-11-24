@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface ConfirmedMatchRepository extends JpaRepository<ConfirmedMatch, Long> {
     Optional<ConfirmedMatch> findByFoundItemIdAndLostItemId(Long foundItemId, Long lostItemId);
     Optional<ConfirmedMatch> findByFoundItemIdAndLostItemIdAndConfirmerEmail(Long foundItemId, Long lostItemId, String confirmerEmail);
+    // List<ConfirmedMatch> findByLostItemIdIn(List<Long> lostItemIds);
 }

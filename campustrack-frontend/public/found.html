@@ -87,6 +87,7 @@
               try {
                 const res = await fetch(`${location.protocol}//${location.hostname}:8080/api/match-confirmations`, {
                   method: 'POST',
+                  credentials: 'include',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ foundItemId: Number(id), lostItemId: Number(lostIdParam) })
                 });
