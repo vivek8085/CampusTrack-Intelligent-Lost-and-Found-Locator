@@ -7,8 +7,6 @@ CampusTrack helps users **report lost items**, **upload images**, and later **ma
 
 ## 🚀 Features
 
- # 🏫 CampusTrack – Intelligent Lost & Found Locator
-
 An integrated Lost & Found management system for campuses. This repository contains three main parts:
 - `lostandfound` — Java Spring Boot backend (Maven)
 - `campustrack-frontend` — React + Vite frontend (admin UI + public views)
