@@ -13,11 +13,12 @@ public class WebConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
+                // Allow development and deployed frontend origins. Use patterns where supported.
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5173") // React dev server
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*")
-                        .allowCredentials(true);
+                    .allowedOriginPatterns("http://localhost:*","https://*.onrender.com","https://*.vercel.app","https://*.netlify.app","https://campusbackend.up.railway.app")
+                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                    .allowedHeaders("*")
+                    .allowCredentials(true);
             }
         };
     }

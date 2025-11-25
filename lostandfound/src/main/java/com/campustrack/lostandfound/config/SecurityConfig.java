@@ -31,9 +31,15 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // Allow local dev servers on any localhost port (Vite sometimes uses 5173 or 5174)
-        // Use allowed origin patterns to permit http://localhost:<any-port>
-        config.setAllowedOriginPatterns(List.of("http://localhost:*"));
+        // Allow local dev servers and deployed frontend origins.
+        // Use allowed origin patterns to permit http://localhost:<any-port> and common host patterns.
+        config.setAllowedOriginPatterns(List.of(
+            "http://localhost:*",
+            "https://*.onrender.com",
+            "https://*.vercel.app",
+            "https://*.netlify.app",
+            "https://campusbackend.up.railway.app"
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
