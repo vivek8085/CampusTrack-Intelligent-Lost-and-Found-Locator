@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AnimatedBackground from './AnimatedBackground';
 import './AdminDashboard.css';
 import adminBg from '../assets/admin-bg.gif';
+import { API_BASE } from '../utils/api';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -33,14 +34,14 @@ export default function AdminDashboard() {
 
   const loadStats = async () => {
     try {
-      const res = await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/dashboard`, { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/api/admin/dashboard`, { credentials: 'include' });
       if (res.ok) setStats(await res.json());
     } catch (e) {}
   };
 
   const loadUsers = async () => {
     try {
-      const res = await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/users`, { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/api/admin/users`, { credentials: 'include' });
       if (res.ok) setUsers(await res.json());
     } catch (e) {}
   };
@@ -72,7 +73,7 @@ export default function AdminDashboard() {
 
   const fetchNotices = async () => {
     try {
-      const host = `${location.protocol}//${location.hostname}:8080`;
+      const host = API_BASE;
       const r = await fetch(`${host}/api/notices`, { credentials: 'include' });
       if (r.ok) setNotices(await r.json());
       else setNotices([]);
@@ -85,7 +86,7 @@ export default function AdminDashboard() {
     const top = Math.max(0, (window.screen.height - h) / 2);
     const popup = window.open('', 'MakeNotice', `width=${w},height=${h},left=${left},top=${top},resizable=yes`);
     if (!popup) { alert('Popup blocked. Please allow popups for this site.'); return; }
-    const host = `${location.protocol}//${location.hostname}:8080`;
+    const host = API_BASE;
     const escape = (s) => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const html = `
       <!doctype html>
@@ -117,7 +118,7 @@ export default function AdminDashboard() {
         <div id="status" class="small"></div>
         <div id="list"></div>
         <script>
-          const host = ${JSON.stringify(host)};
+          const host = ${JSON.stringify(API_BASE)};
           const status = document.getElementById('status');
           function setStatus(t){ status.textContent = t; }
           async function fetchList(){
@@ -156,7 +157,7 @@ export default function AdminDashboard() {
             if(!title.trim() && !content.trim()){ alert('Enter title or content'); return; }
             setStatus('Publishing...');
             try{
-              const r = await fetch(host + '/api/admin/notices', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title, content }) });
+                const r = await fetch(host + '/api/admin/notices', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title, content }) });
               if(!r.ok){ setStatus('Publish failed'); alert(await r.text().catch(()=>'Error')); setStatus(''); return; }
               setStatus('Published');
               document.getElementById('title').value=''; document.getElementById('content').value='';
@@ -182,7 +183,7 @@ export default function AdminDashboard() {
   const deleteNotice = async (id) => {
     if (!id || !window.confirm('Delete this announcement?')) return;
     try {
-      const host = `${location.protocol}//${location.hostname}:8080`;
+      const host = API_BASE;
       const r = await fetch(`${host}/api/admin/notices/${id}`, { method: 'DELETE', credentials: 'include' });
       if (!r.ok) {
         const txt = await r.text().catch(()=>'');
@@ -211,7 +212,7 @@ export default function AdminDashboard() {
   const deleteUser = async (id) => {
     if (!window.confirm('Delete user permanently?')) return;
     try {
-      await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/user/${id}/delete`, { method: 'POST', credentials: 'include' });
+      await fetch(`${API_BASE}/api/admin/user/${id}/delete`, { method: 'POST', credentials: 'include' });
       await loadUsers();
       await loadStats();
     } catch (e) {}
@@ -273,7 +274,7 @@ export default function AdminDashboard() {
   const deleteLostItem = async (item) => {
     if (!item || !window.confirm('Delete this lost item? This may be irreversible.')) return;
     const id = item.id;
-    const host = `${location.protocol}//${location.hostname}:8080`;
+    const host = API_BASE;
     const candidates = [
       { url: `${host}/api/lostitems/${id}/delete`, method: 'POST' },
       { url: `${host}/api/lostitems/${id}`, method: 'DELETE' },
@@ -293,7 +294,7 @@ export default function AdminDashboard() {
   const deleteFoundItem = async (item) => {
     if (!item || !window.confirm('Delete this found item? This may be irreversible.')) return;
     const id = item.id;
-    const host = `${location.protocol}//${location.hostname}:8080`;
+    const host = API_BASE;
     const candidates = [
       { url: `${host}/api/founditems/${id}/delete`, method: 'POST' },
       { url: `${host}/api/founditems/${id}`, method: 'DELETE' },
@@ -312,7 +313,7 @@ export default function AdminDashboard() {
   // For confirmed matches, the backend exposes an archive/receive endpoint
   const removeMatch = async (m) => {
     if (!m || !window.confirm('Remove/confirm received for this match? This will archive and may delete related items.')) return;
-    const host = `${location.protocol}//${location.hostname}:8080`;
+    const host = API_BASE;
     try {
       const r = await fetch(`${host}/api/notifications/${m.id}/received`, { method: 'POST', credentials: 'include' });
       if (r.ok) {
@@ -329,7 +330,7 @@ export default function AdminDashboard() {
   const deleteBackup = async (b) => {
     if (!b || !window.confirm('Delete this backup record?')) return;
     const id = b.id;
-    const host = `${location.protocol}//${location.hostname}:8080`;
+    const host = API_BASE;
     const candidates = [
       { url: `${host}/api/backups/${id}/delete`, method: 'POST' },
       { url: `${host}/api/admin/backups/${id}/delete`, method: 'POST' },
@@ -348,7 +349,7 @@ export default function AdminDashboard() {
   const unblock = async (id) => {
     if (!window.confirm('Remove this report/block record?')) return;
     try {
-      await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/block/${id}/delete`, { method: 'POST', credentials: 'include' });
+      await fetch(`${API_BASE}/api/admin/block/${id}/delete`, { method: 'POST', credentials: 'include' });
       setReportedUsers(prev => prev.filter(p => p.id !== id));
       await loadStats();
     } catch (e) {}
@@ -356,7 +357,7 @@ export default function AdminDashboard() {
 
   const fetchBlocks = async () => {
     try {
-      const r = await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/blocks`, { credentials: 'include' });
+      const r = await fetch(`${API_BASE}/api/admin/blocks`, { credentials: 'include' });
       if (r.ok) setReportedUsers(await r.json());
       else setReportedUsers([]);
     } catch (e) { setReportedUsers([]); }
@@ -377,7 +378,7 @@ export default function AdminDashboard() {
   const createNotice = async () => {
     if (!noticeTitle.trim() && !noticeContent.trim()) { alert('Please enter a title or content'); return; }
     try {
-      const host = `${location.protocol}//${location.hostname}:8080`;
+      const host = API_BASE;
       const res = await fetch(`${host}/api/admin/notices`, {
         method: 'POST',
         credentials: 'include',
@@ -408,7 +409,7 @@ export default function AdminDashboard() {
       const params = new URLSearchParams();
       params.set('email', (selectedBlock.blockedEmail || selectedBlock.blocked).toLowerCase());
       if (blockReason) params.set('reason', blockReason);
-      const r = await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/blockUser?` + params.toString(), { method: 'POST', credentials: 'include' });
+      const r = await fetch(`${API_BASE}/api/admin/blockUser?` + params.toString(), { method: 'POST', credentials: 'include' });
       if (r.ok) {
         // refresh blocks list
         await fetchBlocks();
@@ -427,21 +428,21 @@ export default function AdminDashboard() {
     async function loadForView() {
       try {
         if (adminView === 'lost-items') {
-          const r = await fetch(`${location.protocol}//${location.hostname}:8080/api/lostitems/all`, { credentials: 'include' });
-          if (r.ok) setLostItems(await r.json());
-        } else if (adminView === 'found-items') {
-          const r = await fetch(`${location.protocol}//${location.hostname}:8080/api/founditems/all`, { credentials: 'include' });
-          if (r.ok) setFoundItems(await r.json());
-        } else if (adminView === 'matched-items') {
-          const r = await fetch(`${location.protocol}//${location.hostname}:8080/api/notifications/confirmed`, { credentials: 'include' });
-          if (r.ok) setMatchedItems(await r.json());
-        } else if (adminView === 'recovered-items') {
+            const r = await fetch(`${API_BASE}/api/lostitems/all`, { credentials: 'include' });
+            if (r.ok) setLostItems(await r.json());
+          } else if (adminView === 'found-items') {
+            const r = await fetch(`${API_BASE}/api/founditems/all`, { credentials: 'include' });
+            if (r.ok) setFoundItems(await r.json());
+          } else if (adminView === 'matched-items') {
+            const r = await fetch(`${API_BASE}/api/notifications/confirmed`, { credentials: 'include' });
+            if (r.ok) setMatchedItems(await r.json());
+          } else if (adminView === 'recovered-items') {
           // try a few likely endpoints for backups -- backend may not expose this, handle gracefully
           const candidates = ['/api/backups/all', '/api/backup/all', '/api/admin/backups', '/api/notifications/backups'];
           let ok = false;
           for (const c of candidates) {
             try {
-              const r = await fetch(`${location.protocol}//${location.hostname}:8080${c}`, { credentials: 'include' });
+                const r = await fetch(`${API_BASE}${c}`, { credentials: 'include' });
               if (r.ok) { setRecoveredItems(await r.json()); ok = true; break; }
             } catch (e) { /* ignore */ }
           }
@@ -449,7 +450,7 @@ export default function AdminDashboard() {
         } else if (adminView === 'reported-users') {
           // fetch stored user blocks (reports) from the backend
           try {
-            const r = await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/blocks`, { credentials: 'include' });
+            const r = await fetch(`${API_BASE}/api/admin/blocks`, { credentials: 'include' });
             if (r.ok) {
               const arr = await r.json();
               // expected shape: { id, blockerEmail, blockedEmail, reason, createdAt }
@@ -487,7 +488,7 @@ export default function AdminDashboard() {
           <button onClick={async () => {
             // call backend logout if present, then clear local session and redirect to login
             try {
-              await fetch(`${location.protocol}//${location.hostname}:8080/api/auth/logout`, { method: 'POST', credentials: 'include' });
+              await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
             } catch (e) { /* ignore */ }
             try { localStorage.removeItem('campustrack_user'); } catch (e) {}
             navigate('/');
@@ -615,8 +616,8 @@ export default function AdminDashboard() {
                   </div>
                 )}
                 {selectedItemType === 'lost' && (
-                  <div>
-                    {selectedItem.imageUrl && <img src={`${location.protocol}//${location.hostname}:8080${selectedItem.imageUrl}`} alt="item" className="w-full max-h-64 object-cover rounded mb-2" />}
+                      <div>
+                        {selectedItem.imageUrl && <img src={`${API_BASE}${selectedItem.imageUrl}`} alt="item" className="w-full max-h-64 object-cover rounded mb-2" />}
                     <div><strong>Title:</strong> {selectedItem.title || selectedItem.itemName}</div>
                     <div><strong>Reporter:</strong> {selectedItem.reporterEmail || selectedItem.reporter}</div>
                     <div><strong>Location:</strong> {selectedItem.lostLocation || selectedItem.location}</div>
@@ -625,7 +626,7 @@ export default function AdminDashboard() {
                 )}
                 {selectedItemType === 'found' && (
                   <div>
-                    {selectedItem.imageUrl && <img src={`${selectedItem.imageUrl.startsWith('/uploads/') ? `${location.protocol}//${location.hostname}:8080${selectedItem.imageUrl}` : selectedItem.imageUrl}`} alt="item" className="w-full max-h-64 object-cover rounded mb-2" />}
+                    {selectedItem.imageUrl && <img src={`${selectedItem.imageUrl.startsWith('/uploads/') ? `${API_BASE}${selectedItem.imageUrl}` : selectedItem.imageUrl}`} alt="item" className="w-full max-h-64 object-cover rounded mb-2" />}
                     <div><strong>Title:</strong> {selectedItem.title || selectedItem.itemName}</div>
                     <div><strong>Reporter:</strong> {selectedItem.reporterEmail || selectedItem.reporter}</div>
                     <div><strong>Location:</strong> {selectedItem.foundLocation || selectedItem.location}</div>

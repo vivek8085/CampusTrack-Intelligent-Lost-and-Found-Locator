@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE } from '../utils/api';
 
 const ViewFoundItems = () => {
   const [foundItems, setFoundItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/founditems/all", {
+    fetch(`${API_BASE}/api/founditems/all`, {
       credentials: "include",
     })
       .then((res) => res.json())
@@ -45,7 +46,7 @@ const ViewFoundItems = () => {
                 (() => {
                   // Use server URL when imageUrl is served from backend (/uploads/...)
                   const src = item.imageUrl.startsWith('/uploads/')
-                    ? `http://localhost:8080${item.imageUrl}`
+                    ? `${API_BASE}${item.imageUrl}`
                     : item.imageUrl;
                   return (
                     <img

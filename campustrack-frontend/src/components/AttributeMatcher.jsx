@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../utils/api';
 
 // Simple attribute-based matcher
 // - Fetches all lost and found items from backend endpoints
@@ -86,8 +87,8 @@ export default function AttributeMatcher() {
     const load = async () => {
       try {
         const [rl, rf] = await Promise.all([
-          fetch('http://localhost:8080/api/lostitems/all').then((r) => r.json()),
-          fetch('http://localhost:8080/api/founditems/all').then((r) => r.json()),
+          fetch(`${API_BASE}/api/lostitems/all`, { credentials: 'include' }).then((r) => r.json()),
+          fetch(`${API_BASE}/api/founditems/all`, { credentials: 'include' }).then((r) => r.json()),
         ]);
         if (!mounted) return;
         setLostItems(rl || []);
@@ -154,7 +155,7 @@ export default function AttributeMatcher() {
           {matches.map((m, idx) => {
             let image = null;
             if (m.found.imageUrl) {
-              image = m.found.imageUrl.startsWith('/uploads/') ? `http://localhost:8080${m.found.imageUrl}` : m.found.imageUrl;
+              image = m.found.imageUrl.startsWith('/uploads/') ? `${API_BASE}${m.found.imageUrl}` : m.found.imageUrl;
             }
             const openDetails = () => {
               const id = m.found.id;

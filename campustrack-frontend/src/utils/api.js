@@ -1,3 +1,7 @@
 import axios from "axios";
-export const apiPost = (url, data) => axios.post(`http://localhost:8080${url}`, data);
-export const apiGet = (url) => axios.get(`http://localhost:8080${url}`);
+
+// Central API base — Vite uses `import.meta.env.VITE_API_BASE` for runtime config.
+export const API_BASE = import.meta.env.VITE_API_BASE || "https://campusbackend.up.railway.app";
+
+export const apiPost = (url, data) => axios.post(`${API_BASE}${url}`, data, { withCredentials: true });
+export const apiGet = (url) => axios.get(`${API_BASE}${url}`, { withCredentials: true });

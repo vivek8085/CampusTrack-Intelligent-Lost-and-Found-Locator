@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { API_BASE } from '../utils/api';
 
 export default function LostItemForm({ onSuccess }) {
   const [formData, setFormData] = useState({
@@ -68,7 +69,7 @@ export default function LostItemForm({ onSuccess }) {
     }
 
     try {
-      const res = await axios.post("http://localhost:8080/api/lostitems/report", data, {
+      const res = await axios.post(`${API_BASE}/api/lostitems/report`, data, {
         withCredentials: true,
       });
       alert(res.data.message || "✅ Lost item reported");

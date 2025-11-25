@@ -10,6 +10,7 @@ import ChatWindow from "./components/ChatWindow";
 import ConversationList from "./components/ConversationList";
 import UserDashboard from "./components/UserDashboard";
 import "./index.css";
+import { API_BASE } from './utils/api';
 export default function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState("dashboard"); // default page after login
@@ -72,8 +73,9 @@ export default function App() {
     if (!user) return;
     // create ws
     try {
-      const wsProto = location.protocol === "https:" ? "wss" : "ws";
-      const wsUrl = `${wsProto}://${location.hostname}:8080/ws/chat`;
+      const wsProto = API_BASE.startsWith('https') ? 'wss' : 'ws';
+      const wsBase = API_BASE.replace(/^https?/, wsProto);
+      const wsUrl = `${wsBase}/ws/chat`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
       ws.onopen = () => console.debug("global ws open");
@@ -299,12 +301,7 @@ export default function App() {
                   try {
                     const partner = conv?.partnerEmail;
                     if (partner) {
-                      await fetch(
-                        `${location.protocol}//${
-                          location.hostname
-                        }:8080/api/chat/markRead?with=${encodeURIComponent(
-                          partner
-                        )}`,
+                      await fetch(`${API_BASE}/api/chat/markRead?with=${encodeURIComponent(partner)}`,
                         {
                           method: "POST",
                           credentials: "include",

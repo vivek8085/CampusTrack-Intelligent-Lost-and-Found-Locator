@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../utils/api';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
@@ -11,56 +12,28 @@ export default function Notifications() {
       setLoading(true);
       setError('');
 
-      // Build backend URL; try explicit localhost fallback for dev servers
-      const primary = `${location.protocol}//${location.hostname}:8080`;
-      const fallback = `http://localhost:8080`;
-      const urlsToTry = [primary, fallback];
-
       try {
-        let lastErr = null;
-        for (const base of urlsToTry) {
-          try {
-            // diagnostic logging to console to help debug 'Failed to fetch'
-            // (will not leak to users)
-            // eslint-disable-next-line no-console
-            console.debug('[Notifications] trying backend:', base + '/api/notifications/my');
-            const res = await fetch(`${base}/api/notifications/my`, { credentials: 'include', headers: { Accept: 'application/json' } });
-            if (res.status === 401) {
-              if (mounted) setError('Please log in to view your confirmed matches.');
-              return;
-            }
-            if (!res.ok) {
-              lastErr = new Error(`Request failed with status ${res.status}`);
-              continue;
-            }
-            const data = await res.json();
-            if (!mounted) return;
-            setNotifications(data || []);
-            try {
-              updateStoredCount(data || []);
-            } catch (e) {
-              // ignore storage/event errors
-            }
-            lastErr = null;
-            break;
-          } catch (e) {
-            lastErr = e;
-            // try next URL
-            // eslint-disable-next-line no-console
-            console.warn('[Notifications] fetch attempt failed for', base, e.message || e);
-          }
+        // Primary backend configured via API_BASE
+        const base = API_BASE;
+        // eslint-disable-next-line no-console
+        console.debug('[Notifications] trying backend:', base + '/api/notifications/my');
+        const res = await fetch(`${base}/api/notifications/my`, { credentials: 'include', headers: { Accept: 'application/json' } });
+        if (res.status === 401) {
+          if (mounted) setError('Please log in to view your confirmed matches.');
+          return;
         }
-
-        if (lastErr) {
-          throw lastErr;
-        }
+        if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+        const data = await res.json();
+        if (!mounted) return;
+        setNotifications(data || []);
+        try { updateStoredCount(data || []); } catch (e) {}
         // If we got no notifications and we have a stored user email, try public fallback by email
         const stored = localStorage.getItem('campustrack_user');
         if ((!notifications || notifications.length === 0) && stored) {
           try {
             const email = JSON.parse(stored).email;
             if (email) {
-              const fb = `${fallback}/api/notifications/for-email/${encodeURIComponent(email)}`;
+              const fb = `${API_BASE}/api/notifications/for-email/${encodeURIComponent(email)}`;
               // eslint-disable-next-line no-console
               console.debug('[Notifications] trying fallback by email:', fb);
               const fres = await fetch(fb, { headers: { Accept: 'application/json' } });
@@ -102,7 +75,7 @@ export default function Notifications() {
 
   const markAsRead = async (id) => {
     // call backend endpoint to mark read
-    const base = `${location.protocol}//${location.hostname}:8080`;
+    const base = API_BASE;
     try {
       const res = await fetch(`${base}/api/notifications/${id}/mark-read`, { method: 'POST', credentials: 'include' });
       if (!res.ok) {
@@ -121,7 +94,7 @@ export default function Notifications() {
 
   const markAsReceived = async (id) => {
     if (!window.confirm('Are you sure you want to mark this as received? This will archive the record and remove the reported items.')) return;
-    const base = `${location.protocol}//${location.hostname}:8080`;
+  const base = API_BASE;
     try {
       const res = await fetch(`${base}/api/notifications/${id}/received`, { method: 'POST', credentials: 'include' });
       if (!res.ok) {

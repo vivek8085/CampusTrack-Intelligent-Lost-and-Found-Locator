@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { API_BASE } from '../utils/api';
 
 function initialsFromEmail(email) {
   if (!email) return '?';
@@ -29,7 +30,7 @@ export default function ChatWindow({ initialTo = '', initialName = '', onClose }
     const loadHistory = async (email) => {
       if (!email) return;
       try {
-        const res = await fetch(`${location.protocol}//${location.hostname}:8080/api/chat/history?with=${encodeURIComponent(email)}`, { credentials: 'include' });
+        const res = await fetch(`${API_BASE}/api/chat/history?with=${encodeURIComponent(email)}`, { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           if (!cancelled) {
@@ -49,8 +50,9 @@ export default function ChatWindow({ initialTo = '', initialName = '', onClose }
       loadHistory(to);
 
       try {
-        const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
-        const wsUrl = `${wsProto}://${location.hostname}:8080/ws/chat`;
+        const wsProto = API_BASE.startsWith('https') ? 'wss' : 'ws';
+        const wsBase = API_BASE.replace(/^https?/, wsProto);
+        const wsUrl = `${wsBase}/ws/chat`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
         ws.onopen = () => setConnected(true);
@@ -198,7 +200,7 @@ export default function ChatWindow({ initialTo = '', initialName = '', onClose }
                         const params = new URLSearchParams();
                         params.set('with', to);
                         if (blockReason) params.set('reason', blockReason);
-                        await fetch(`${location.protocol}//${location.hostname}:8080/api/chat/block?` + params.toString(), { method: 'POST', credentials: 'include' });
+                        await fetch(`${API_BASE}/api/chat/block?` + params.toString(), { method: 'POST', credentials: 'include' });
                       } catch (e) {
                         // ignore network errors
                       }

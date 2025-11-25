@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE } from '../utils/api';
 
 const ViewLostItems = () => {
   const [items, setItems] = useState([]);
@@ -14,7 +15,7 @@ const ViewLostItems = () => {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/lostitems/all");
+        const res = await fetch(`${API_BASE}/api/lostitems/all`, { credentials: 'include' });
         if (!res.ok) throw new Error("Failed to fetch items");
         const data = await res.json();
         setItems(data);
@@ -122,7 +123,7 @@ const ViewLostItems = () => {
             >
               {item.imageUrl ? (
                 <img
-                  src={`http://localhost:8080${item.imageUrl}`}
+                  src={`${API_BASE}${item.imageUrl}`}
                   alt={item.itemName}
                   className="rounded-xl w-full h-48 object-cover mb-3"
                 />

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE } from '../utils/api';
 
 export default function MatchSidebar({ foundId, lostId, highlightLostId }) {
   const [suggestions, setSuggestions] = useState([]);
@@ -11,7 +12,7 @@ export default function MatchSidebar({ foundId, lostId, highlightLostId }) {
 
     const fetchLosts = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/lostitems/all");
+        const res = await fetch(`${API_BASE}/api/lostitems/all`, { credentials: 'include' });
         const data = await res.json();
         if (!cancelled) {
           const map = {};
@@ -32,7 +33,7 @@ export default function MatchSidebar({ foundId, lostId, highlightLostId }) {
     if (streamToUse) {
       setLoading(true);
       setError("");
-      es = new EventSource(`http://localhost:8080/api/stream/matches/${streamToUse}`);
+      es = new EventSource(`${API_BASE}/api/stream/matches/${streamToUse}`);
       es.onmessage = (ev) => {
         try {
           const parsed = JSON.parse(ev.data);
@@ -82,7 +83,7 @@ export default function MatchSidebar({ foundId, lostId, highlightLostId }) {
             const isMatch = highlightLostId && highlightLostId === s.lostItemId;
             const imageSrc = lost.imageUrl
               ? lost.imageUrl.startsWith("/uploads/")
-                ? `http://localhost:8080${lost.imageUrl}`
+                ? `${API_BASE}${lost.imageUrl}`
                 : lost.imageUrl
               : null;
 

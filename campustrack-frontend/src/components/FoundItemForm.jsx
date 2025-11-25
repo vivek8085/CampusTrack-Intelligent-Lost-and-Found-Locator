@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import { API_BASE } from '../utils/api';
 
 export default function FoundItemForm({ user, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -66,7 +67,7 @@ export default function FoundItemForm({ user, onSuccess }) {
     }
 
     try {
-      const res = await axios.post("http://localhost:8080/api/founditems/report", data, {
+      const res = await axios.post(`${API_BASE}/api/founditems/report`, data, {
         withCredentials: true,
       });
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE } from '../utils/api';
 import './AdminDashboard.css';
 
 export default function LoginSignup({ onLogin }) {
@@ -50,7 +51,7 @@ export default function LoginSignup({ onLogin }) {
     }
 
     try {
-        const url = `http://localhost:8080/api/auth/${isLogin ? "login" : "signup"}`;
+        const url = `${API_BASE}/api/auth/${isLogin ? "login" : "signup"}`;
         const payload = isLogin
           ? { email: form.email, password: form.password }
           : { name: form.name, email: form.email, password: form.password, role: isAdminMode ? 'admin' : 'user', adminId: isAdminMode ? adminId : undefined };

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import AdminDashboard from '../components/AdminDashboard';
+import { API_BASE } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 
 export default function AdminPage() {
@@ -11,7 +12,7 @@ export default function AdminPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/dashboard`, { credentials: 'include' });
+        const res = await fetch(`${API_BASE}/api/admin/dashboard`, { credentials: 'include' });
         if (cancelled) return;
         if (res.status === 200) {
           setAuthorized(true);

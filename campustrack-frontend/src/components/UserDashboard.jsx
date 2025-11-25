@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './UserDashboard.css';
+import { API_BASE } from '../utils/api';
 
 export default function UserDashboard() {
   const [stats, setStats] = useState(null);
@@ -12,11 +13,11 @@ export default function UserDashboard() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${location.protocol}//${location.hostname}:8080/api/dashboard`, { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/api/dashboard`, { credentials: 'include' });
       if (res.ok) return await res.json();
     } catch (e) {}
     try {
-      const res2 = await fetch(`${location.protocol}//${location.hostname}:8080/api/admin/dashboard`, { credentials: 'include' });
+      const res2 = await fetch(`${API_BASE}/api/admin/dashboard`, { credentials: 'include' });
       if (res2.ok) return await res2.json();
     } catch (e) {}
     return null;
@@ -24,7 +25,7 @@ export default function UserDashboard() {
 
   // Try to obtain overall counts for matched and recovered items using admin endpoints
   const fetchOverallCounts = async () => {
-    const host = `${location.protocol}//${location.hostname}:8080`;
+    const host = API_BASE;
     const out = {};
     try {
       const r = await fetch(`${host}/api/notifications/confirmed`, { credentials: 'include' });
@@ -114,7 +115,7 @@ export default function UserDashboard() {
 
   const fetchNotices = async () => {
     try {
-      const host = `${location.protocol}//${location.hostname}:8080`;
+      const host = API_BASE;
       const res = await fetch(`${host}/api/notices`, { credentials: 'include' });
       if (!res.ok) return setNotices([]);
       const arr = await res.json();
@@ -126,7 +127,7 @@ export default function UserDashboard() {
 
   const createNotice = async () => {
     try {
-      const host = `${location.protocol}//${location.hostname}:8080`;
+      const host = API_BASE;
       const res = await fetch(`${host}/api/admin/notices`, {
         method: 'POST',
         credentials: 'include',
@@ -144,7 +145,7 @@ export default function UserDashboard() {
   const deleteNotice = async (id) => {
     if (!confirm('Delete this notice?')) return;
     try {
-      const host = `${location.protocol}//${location.hostname}:8080`;
+      const host = API_BASE;
       const res = await fetch(`${host}/api/admin/notices/${id}`, { method: 'DELETE', credentials: 'include' });
       if (!res.ok) throw new Error('Failed');
       await fetchNotices();

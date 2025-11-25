@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../utils/api';
 
 export default function ConversationList({ onSelect }) {
   const [convs, setConvs] = useState([]);
@@ -7,7 +8,7 @@ export default function ConversationList({ onSelect }) {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${location.protocol}//${location.hostname}:8080/api/chat/conversations`, { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/api/chat/conversations`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setConvs(data);
