@@ -180,7 +180,9 @@ export default function App() {
           {user?.role === "admin" && (
             <button
               onClick={() =>
-                window.open(`${location.origin}/admin`, "_blank", "noopener")
+                // Use a hash route so static hosts (Render, Netlify, etc.)
+                // serve the SPA index and the client router handles /admin
+                window.open(`${location.origin}/#/admin`, "_blank", "noopener")
               }
               className={`nav-btn transition transform duration-200 px-3 py-1 rounded-md text-sm shadow-sm nav-inactive`}
               title="Admin Dashboard (opens in new tab)"
