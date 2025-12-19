@@ -31,7 +31,7 @@
 
         try {
           // call backend directly to avoid dev-server proxy issues
-          const backend = `https://campusbackend.up.railway.app`;
+          const backend = `${location.protocol}//${location.hostname}:8080`;
           const res = await fetch(`${backend}/api/founditems/all`, { credentials: 'include' });
           if (!res.ok) {
             const txt = await res.text();
@@ -53,7 +53,7 @@
             content.innerHTML = `<div style="color:#374151">Item with id ${id} not found.</div>`;
             return;
           }
-          const imageUrl = item.imageUrl ? (item.imageUrl.startsWith('/uploads/') ? `https://campusbackend.up.railway.app${item.imageUrl}` : item.imageUrl) : null;
+          const imageUrl = item.imageUrl ? (item.imageUrl.startsWith('/uploads/') ? `${backend}${item.imageUrl}` : item.imageUrl) : null;
 
           // check if lostId passed so we can show confirm button
           const params = new URLSearchParams(window.location.search);
@@ -85,14 +85,25 @@
               btn.disabled = true;
               msg.textContent = 'Saving...';
               try {
-                const res = await fetch(`https://campusbackend.up.railway.app/api/match-confirmations`, {
+                const res = await fetch(`${location.protocol}//${location.hostname}:8080/api/match-confirmations`, {
                   method: 'POST',
-                  credentials: 'include',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ foundItemId: Number(id), lostItemId: Number(lostIdParam) })
+                  body: JSON.stringify({ foundItemId: Number(id), lostItemId: Number(lostIdParam) }),
+                  credentials: 'include'
                 });
-                if (!res.ok) throw new Error('Server error');
-                const json = await res.json();
+                // try to parse JSON message if present
+                let json;
+                try {
+                  const ctype = res.headers.get('content-type') || '';
+                  json = ctype.includes('application/json') ? await res.json() : { message: await res.text() };
+                } catch (e) {
+                  json = { message: 'Unexpected server response' };
+                }
+                if (!res.ok) {
+                  msg.textContent = json.message || `Server error (${res.status})`;
+                  btn.disabled = false;
+                  return;
+                }
                 msg.textContent = json.message || 'Confirmed';
               } catch (err) {
                 console.error(err);
