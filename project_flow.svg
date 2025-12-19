@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <style>
+    .box { fill:#fff; stroke:#0b7285; stroke-width:2; rx:8 }
+    .title { font: 700 15px sans-serif; fill:#06283D }
+    .text { font: 13px sans-serif; fill:#0b3b66 }
+    .arrow { stroke:#0b7285; stroke-width:2; marker-end:url(#arrowhead) }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#0b7285" />
+    </marker>
+  </defs>
+
+  <!-- Frontend -->
+  <g transform="translate(60,60)">
+    <rect class="box" width="220" height="100" />
+    <text class="title" x="16" y="30">Frontend (Vite / React)</text>
+    <text class="text" x="16" y="54">• User UI</text>
+    <text class="text" x="16" y="74">• Forms, Notifications</text>
+  </g>
+
+  <!-- Backend -->
+  <g transform="translate(360,40)">
+    <rect class="box" width="260" height="140" />
+    <text class="title" x="14" y="30">Backend (Spring Boot)</text>
+    <text class="text" x="14" y="54">• REST APIs</text>
+    <text class="text" x="14" y="74">• Matching service</text>
+    <text class="text" x="14" y="94">• WebSocket / Notifications</text>
+  </g>
+
+  <!-- AI Service -->
+  <g transform="translate(700,40)">
+    <rect class="box" width="220" height="120" />
+    <text class="title" x="12" y="30">AI / Matcher</text>
+    <text class="text" x="12" y="54">• Attribute matching</text>
+    <text class="text" x="12" y="74">• ML model (campustrack-ai)</text>
+  </g>
+
+  <!-- Database -->
+  <g transform="translate(360,220)">
+    <rect class="box" width="260" height="100" />
+    <text class="title" x="14" y="30">Database</text>
+    <text class="text" x="14" y="54">• Users, LostItem, FoundItem</text>
+    <text class="text" x="14" y="74">• MatchSuggestion, ConfirmedMatch</text>
+  </g>
+
+  <!-- Arrows -->
+  <line class="arrow" x1="280" y1="110" x2="360" y2="110" />
+  <text class="text" x="300" y="100">1. API calls</text>
+
+  <line class="arrow" x1="620" y1="110" x2="700" y2="110" />
+  <text class="text" x="640" y="100">2. Matching request</text>
+
+  <line class="arrow" x1="820" y1="150" x2="620" y2="260" />
+  <text class="text" x="710" y="210">3. Store suggestions</text>
+
+  <line class="arrow" x1="500" y1="260" x2="500" y2="180" />
+  <text class="text" x="510" y="220">4. Notify user</text>
+
+  <!-- Flow steps footer -->
+  <g transform="translate(40,360)">
+    <text class="title" x="0" y="20">High-level Flow</text>
+    <text class="text" x="0" y="44">1. User submits lost/found item via Frontend.</text>
+    <text class="text" x="0" y="64">2. Backend persists item and calls AI Matcher.</text>
+    <text class="text" x="0" y="84">3. Matcher returns suggestions; backend saves them.</text>
+    <text class="text" x="0" y="104">4. Backend notifies users via WebSocket / Email.</text>
+  </g>
+</svg>

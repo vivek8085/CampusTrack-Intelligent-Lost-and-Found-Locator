@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <style>
+    .box { fill:#fff; stroke:#2b6cb0; stroke-width:2; rx:6; }
+    .title { font: 600 16px sans-serif; fill:#0b3b66 }
+    .attr { font: 14px sans-serif; fill:#102a43 }
+    .rel { stroke:#2d3748; stroke-width:2 }
+  </style>
+  <!-- Entities -->
+  <g transform="translate(40,40)">
+    <rect class="box" width="240" height="120" />
+    <text class="title" x="12" y="28">User</text>
+    <text class="attr" x="12" y="52">• id (PK)</text>
+    <text class="attr" x="12" y="72">• name</text>
+    <text class="attr" x="12" y="92">• email</text>
+  </g>
+
+  <g transform="translate(320,40)">
+    <rect class="box" width="260" height="140" />
+    <text class="title" x="12" y="28">LostItem</text>
+    <text class="attr" x="12" y="52">• id (PK)</text>
+    <text class="attr" x="12" y="72">• user_id (FK -> User.id)</text>
+    <text class="attr" x="12" y="92">• title</text>
+    <text class="attr" x="12" y="112">• description</text>
+  </g>
+
+  <g transform="translate(320,220)">
+    <rect class="box" width="260" height="140" />
+    <text class="title" x="12" y="28">FoundItem</text>
+    <text class="attr" x="12" y="52">• id (PK)</text>
+    <text class="attr" x="12" y="72">• user_id (FK -> User.id)</text>
+    <text class="attr" x="12" y="92">• title</text>
+    <text class="attr" x="12" y="112">• location</text>
+  </g>
+
+  <g transform="translate(680,40)">
+    <rect class="box" width="260" height="120" />
+    <text class="title" x="12" y="28">MatchSuggestion</text>
+    <text class="attr" x="12" y="52">• id (PK)</text>
+    <text class="attr" x="12" y="72">• lost_item_id (FK -> LostItem.id)</text>
+    <text class="attr" x="12" y="92">• found_item_id (FK -> FoundItem.id)</text>
+  </g>
+
+  <g transform="translate(680,200)">
+    <rect class="box" width="260" height="100" />
+    <text class="title" x="12" y="28">ConfirmedMatch</text>
+    <text class="attr" x="12" y="52">• id (PK)</text>
+    <text class="attr" x="12" y="72">• suggestion_id (FK -> MatchSuggestion.id)</text>
+  </g>
+
+  <g transform="translate(40,220)">
+    <rect class="box" width="240" height="100" />
+    <text class="title" x="12" y="28">Notification</text>
+    <text class="attr" x="12" y="52">• id (PK)</text>
+    <text class="attr" x="12" y="72">• user_id (FK -> User.id)</text>
+  </g>
+
+  <!-- Relationships (lines) -->
+  <!-- User -> LostItem -->
+  <line class="rel" x1="280" y1="120" x2="320" y2="120" />
+  <text x="300" y="118" font-size="12" fill="#0b3b66">1..*</text>
+
+  <!-- User -> FoundItem -->
+  <line class="rel" x1="280" y1="260" x2="320" y2="260" />
+  <text x="300" y="258" font-size="12" fill="#0b3b66">1..*</text>
+
+  <!-- LostItem -> MatchSuggestion -->
+  <line class="rel" x1="580" y1="80" x2="680" y2="80" />
+  <text x="630" y="78" font-size="12" fill="#0b3b66">0..*</text>
+
+  <!-- FoundItem -> MatchSuggestion -->
+  <line class="rel" x1="580" y1="260" x2="680" y2="260" />
+  <text x="630" y="258" font-size="12" fill="#0b3b66">0..*</text>
+
+  <!-- MatchSuggestion -> ConfirmedMatch -->
+  <line class="rel" x1="940" y1="140" x2="940" y2="200" />
+  <text x="950" y="170" font-size="12" fill="#0b3b66">0..1</text>
+
+  <!-- User -> Notification -->
+  <line class="rel" x1="160" y1="220" x2="160" y2="220" />
+
+  <!-- Legend -->
+  <g transform="translate(40,360)">
+    <text class="title" x="0" y="20">Legend</text>
+    <text class="attr" x="0" y="44">• PK = Primary Key, FK = Foreign Key</text>
+    <text class="attr" x="0" y="64">• Cardinalities shown near the links</text>
+  </g>
+</svg>
